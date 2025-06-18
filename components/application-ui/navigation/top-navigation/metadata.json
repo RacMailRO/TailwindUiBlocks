@@ -1,21 +1,22 @@
 {
-  "name": "Top Navigation",
-  "description": "A responsive top navigation bar with logo, menu items, and user dropdown",
-  "category": "application-ui",
-  "subcategory": "navigation",
-  "tags": ["navigation", "navbar", "menu", "header", "responsive"],
-  "responsive": true,
-  "darkMode": true,
-  "dependencies": ["tailwindcss"],
-  "version": "1.0.0",
-  "author": "TailwindUI Blocks",
-  "created": "2025-06-18",
-  "updated": "2025-06-18",
-  "preview": "top-navigation-preview.jpg",
-  "features": [
-    "Responsive design",
-    "Mobile hamburger menu",
-    "User profile dropdown",
-    "Logo and brand area"
-  ]
+    "name": "Top Navigation",
+    "description": "A responsive top navigation bar with logo, menu items, and user dropdown",
+    "category": "application-ui",
+    "subcategory": "navigation",
+    "tags": [
+        "navigation",
+        "navbar",
+        "menu",
+        "header",
+        "responsive"
+    ],
+    "responsive": true,
+    "darkMode": true,
+    "dependencies": [
+        "tailwindcss"
+    ],
+    "version": "1.0.0",
+    "author": "TailwindUI Blocks",
+    "created": "2025-06-18 16:35:52",
+    "updated": "2025-06-18 16:35:52"
 }

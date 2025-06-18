@@ -1,21 +1,22 @@
 {
-  "name": "Login Form",
-  "description": "A clean login form with email, password fields, and additional options",
-  "category": "application-ui",
-  "subcategory": "forms",
-  "tags": ["login", "authentication", "form", "signin", "user"],
-  "responsive": true,
-  "darkMode": true,
-  "dependencies": ["tailwindcss"],
-  "version": "1.0.0",
-  "author": "TailwindUI Blocks",
-  "created": "2025-06-18",
-  "updated": "2025-06-18",
-  "preview": "login-form-preview.jpg",
-  "features": [
-    "Email and password fields",
-    "Remember me checkbox",
-    "Forgot password link",
-    "Social login options"
-  ]
+    "name": "Login Form",
+    "description": "A clean login form with email, password fields, and additional options",
+    "category": "application-ui",
+    "subcategory": "forms",
+    "tags": [
+        "login",
+        "authentication",
+        "form",
+        "signin",
+        "user"
+    ],
+    "responsive": true,
+    "darkMode": true,
+    "dependencies": [
+        "tailwindcss"
+    ],
+    "version": "1.0.0",
+    "author": "TailwindUI Blocks",
+    "created": "2025-06-18 16:36:25",
+    "updated": "2025-06-18 16:36:25"
 }
