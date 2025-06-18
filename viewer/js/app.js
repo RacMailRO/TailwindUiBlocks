@@ -17,9 +17,41 @@ class TailwindUIViewer {
         this.editorTheme = localStorage.getItem('editorTheme') || 'vs-dark';
         this.scrollPosition = 0;
         this.isComponentModified = false;
-        this.previewSectionSize = localStorage.getItem('previewSectionSize') || '50';
+        // Defer initialization of these from localStorage until helper is available
+        // this.previewSectionSize = localStorage.getItem('previewSectionSize') || '50';
         
         this.init();
+
+        // Initialize properties that depend on localStorage *after* helpers are defined (or call helpers directly in constructor)
+        this.currentTheme = this.safeLocalStorageGetItem('theme', 'light');
+        this.currentBreakpoint = this.safeLocalStorageGetItem('breakpoint', 'desktop');
+        this.currentWidth = parseInt(this.safeLocalStorageGetItem('width', '1200'));
+        this.currentView = this.safeLocalStorageGetItem('view', 'split');
+        this.splitOrientation = this.safeLocalStorageGetItem('splitOrientation', 'horizontal');
+        this.editorTheme = this.safeLocalStorageGetItem('editorTheme', 'vs-dark');
+        this.previewSectionSize = this.safeLocalStorageGetItem('previewSectionSize', '50');
+        this.favorites = [];
+
+    }
+
+    safeLocalStorageSetItem(key, value) {
+        try {
+            localStorage.setItem(key, value);
+        } catch (e) {
+            console.warn(`Failed to set item in localStorage: ${key}`, e);
+            // Optionally, notify the user if settings can't be saved.
+            // this.showToast('Warning: Could not save settings. LocalStorage might be disabled or full.', 'error');
+        }
+    }
+
+    safeLocalStorageGetItem(key, defaultValue) {
+        try {
+            const value = localStorage.getItem(key);
+            return value === null ? defaultValue : value;
+        } catch (e) {
+            console.warn(`Failed to get item from localStorage: ${key}`, e);
+            return defaultValue;
+        }
     }
     
     init() {
@@ -33,8 +65,134 @@ class TailwindUIViewer {
         this.initSplitView();
         this.initComponentActions();
         this.initResizers();
+        this.initFavorites(); // Initialize favorites system
         this.restoreSettings();
         this.updateBreakpointDisplay();
+    }
+
+    initFavorites() {
+        const storedFavorites = this.safeLocalStorageGetItem('favoriteComponents', '[]');
+        try {
+            this.favorites = JSON.parse(storedFavorites);
+        } catch (e) {
+            console.error("Failed to parse favorites from localStorage", e);
+            this.favorites = [];
+        }
+        this.renderFavoritesList();
+        this.updateFavoriteStarIcons();
+
+        // Event listener for favorite toggles (using event delegation on a parent)
+        const sidebarNav = document.querySelector('nav.p-4'); // Main navigation container in sidebar
+        if (sidebarNav) {
+            sidebarNav.addEventListener('click', (e) => {
+                const toggleButton = e.target.closest('.favorite-toggle');
+                if (toggleButton) {
+                    e.preventDefault();
+                    e.stopPropagation(); // Prevent component link navigation if star is inside <a>
+                    const category = toggleButton.dataset.category;
+                    const subcategory = toggleButton.dataset.subcategory;
+                    const componentSlug = toggleButton.dataset.componentSlug;
+                    this.toggleFavorite(category, subcategory, componentSlug);
+                }
+            });
+        }
+    }
+
+    toggleFavorite(category, subcategory, componentSlug) {
+        const identifier = `${category}/${subcategory}/${componentSlug}`;
+        const index = this.favorites.indexOf(identifier);
+
+        if (index > -1) {
+            this.favorites.splice(index, 1); // Remove from favorites
+        } else {
+            this.favorites.push(identifier); // Add to favorites
+        }
+
+        this.safeLocalStorageSetItem('favoriteComponents', JSON.stringify(this.favorites));
+        this.renderFavoritesList();
+        this.updateFavoriteStarIcons(); // Update all stars
+    }
+
+    renderFavoritesList() {
+        const favoritesListContent = document.getElementById('favorites-list-content');
+        const noFavoritesMessage = document.getElementById('no-favorites-message');
+        if (!favoritesListContent || !noFavoritesMessage) return;
+
+        // Clear only dynamically added favorite items (divs)
+        Array.from(favoritesListContent.querySelectorAll('div.flex')).forEach(favItemDiv => favItemDiv.remove());
+
+        if (this.favorites.length === 0) {
+            noFavoritesMessage.classList.remove('hidden');
+        } else {
+            noFavoritesMessage.classList.add('hidden');
+            this.favorites.forEach(identifier => {
+                const [cat, subcat, slug] = identifier.split('/');
+                // Find component details (name) from the main component tree if possible
+                // This requires access to the `components` structure or querying the DOM.
+                // For simplicity, we'll use the slug as name for now, or try to find it.
+                let componentName = slug;
+                const originalLink = document.querySelector(`.component-link[data-category="${cat}"][data-subcategory="${subcat}"][data-component="${slug}"]`);
+                if (originalLink) {
+                    componentName = originalLink.textContent.trim();
+                }
+
+                const div = document.createElement('div');
+                div.className = 'flex items-center justify-between group';
+
+                const link = document.createElement('a');
+                link.href = `?category=${cat}&subcategory=${subcat}&component=${slug}&theme=${this.currentTheme}&breakpoint=${this.currentBreakpoint}`;
+                link.className = 'component-link flex-grow text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 py-1 px-2 rounded';
+                link.dataset.category = cat;
+                link.dataset.subcategory = subcat;
+                link.dataset.component = slug;
+                link.textContent = componentName;
+
+                const starButton = document.createElement('button');
+                starButton.className = 'favorite-toggle p-1 rounded-md text-yellow-500 dark:text-yellow-400'; // Already favorited
+                starButton.dataset.category = cat;
+                starButton.dataset.subcategory = subcat;
+                starButton.dataset.componentSlug = slug;
+                starButton.title = "Toggle favorite";
+                starButton.innerHTML = `
+                    <svg class="w-4 h-4" fill="currentColor" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.846 5.671a1 1 0 00.95.69h5.969c.969 0 1.371 1.24.588 1.81l-4.828 3.522a1 1 0 00-.364 1.118l1.846 5.671c.3.921-.755 1.688-1.54 1.118l-4.828-3.522a1 1 0 00-1.176 0l-4.828 3.522c-.784.57-1.838-.197-1.539-1.118l1.846-5.671a1 1 0 00-.364-1.118L2.28 11.1c-.783-.57-.38-1.81.588-1.81h5.969a1 1 0 00.95-.69L11.049 2.927z"></path>
+                    </svg>`;
+
+                div.appendChild(link);
+                div.appendChild(starButton);
+                favoritesListContent.appendChild(div);
+            });
+        }
+         // Ensure the noFavoritesMessage is correctly managed if it was part of the cleared innerHTML
+        if (!favoritesListContent.querySelector('#no-favorites-message') && favoritesListContent.firstChild) {
+            // If list has items, ensure message is not there / is hidden
+        } else if (!favoritesListContent.firstChild) {
+            // If list is empty, re-add and show message
+            favoritesListContent.appendChild(noFavoritesMessage);
+            noFavoritesMessage.classList.remove('hidden');
+        }
+
+
+    }
+
+    updateFavoriteStarIcons() {
+        document.querySelectorAll('.favorite-toggle').forEach(button => {
+            const category = button.dataset.category;
+            const subcategory = button.dataset.subcategory;
+            const componentSlug = button.dataset.componentSlug;
+            const identifier = `${category}/${subcategory}/${componentSlug}`;
+            const starSvg = button.querySelector('svg');
+
+            if (this.favorites.includes(identifier)) {
+                starSvg.setAttribute('fill', 'currentColor');
+                button.classList.add('text-yellow-500', 'dark:text-yellow-400');
+                button.classList.remove('text-gray-400');
+            } else {
+                starSvg.setAttribute('fill', 'none');
+                button.classList.add('text-gray-400');
+                button.classList.remove('text-yellow-500', 'dark:text-yellow-400');
+            }
+        });
     }
     
     restoreSettings() {
@@ -109,11 +267,11 @@ class TailwindUIViewer {
         
         if (isDark) {
             document.documentElement.classList.remove('dark');
-            localStorage.setItem('theme', 'light');
+            this.safeLocalStorageSetItem('theme', 'light');
             this.currentTheme = 'light';
         } else {
             document.documentElement.classList.add('dark');
-            localStorage.setItem('theme', 'dark');
+            this.safeLocalStorageSetItem('theme', 'dark');
             this.currentTheme = 'dark';
         }
         
@@ -129,6 +287,7 @@ class TailwindUIViewer {
         const previewTab = document.getElementById('preview-tab');
         const codeTab = document.getElementById('code-tab');
         const splitTab = document.getElementById('split-tab');
+        const examplesTab = document.getElementById('examples-tab');
         
         if (previewTab) {
             previewTab.addEventListener('click', () => this.switchView('preview'));
@@ -140,6 +299,10 @@ class TailwindUIViewer {
         
         if (splitTab) {
             splitTab.addEventListener('click', () => this.switchView('split'));
+        }
+
+        if (examplesTab) {
+            examplesTab.addEventListener('click', () => this.switchView('examples'));
         }
         
         // Editor theme toggle
@@ -159,8 +322,39 @@ class TailwindUIViewer {
         if (sidebarToggle) {
             sidebarToggle.addEventListener('click', () => this.toggleSidebar());
         }
+
+        // Download HTML button
+        const downloadButton = document.getElementById('download-html');
+        if (downloadButton) {
+            downloadButton.addEventListener('click', () => this.downloadComponentHtml());
+        }
     }
     
+    downloadComponentHtml() {
+        if (!this.currentComponent || !this.currentComponent.html) {
+            this.showToast('No component HTML available to download.', 'error');
+            return;
+        }
+
+        const htmlContent = this.currentComponent.html;
+        // Use component slug for filename, default to 'component.html'
+        const filename = (this.currentComponent.slug || 'component') + '.html';
+
+        const blob = new Blob([htmlContent], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        this.showToast(`Downloaded ${filename}`, 'success');
+    }
+
     initSidebar() {
         // Subcategory toggles
         const subcategoryToggles = document.querySelectorAll('.subcategory-toggle');
@@ -226,8 +420,8 @@ class TailwindUIViewer {
         this.currentWidth = parseInt(width);
         
         // Save to localStorage
-        localStorage.setItem('breakpoint', this.currentBreakpoint);
-        localStorage.setItem('width', this.currentWidth);
+        this.safeLocalStorageSetItem('breakpoint', this.currentBreakpoint);
+        this.safeLocalStorageSetItem('width', this.currentWidth.toString());
         
         // Update active button
         document.querySelectorAll('.breakpoint-btn').forEach(btn => {
@@ -260,7 +454,7 @@ class TailwindUIViewer {
         if (widthSlider) {
             widthSlider.addEventListener('input', (e) => {
                 this.currentWidth = parseInt(e.target.value);
-                localStorage.setItem('width', this.currentWidth);
+                this.safeLocalStorageSetItem('width', this.currentWidth.toString());
                 this.updateBreakpointFromWidth();
                 this.updateContainerWidths();
                 this.updateBreakpointDisplay();
@@ -280,7 +474,7 @@ class TailwindUIViewer {
         
         if (newBreakpoint !== this.currentBreakpoint) {
             this.currentBreakpoint = newBreakpoint;
-            localStorage.setItem('breakpoint', this.currentBreakpoint);
+            this.safeLocalStorageSetItem('breakpoint', this.currentBreakpoint);
             this.updateBreakpointButtons();
         }
     }
@@ -364,53 +558,91 @@ class TailwindUIViewer {
     }
     
     showAllComponents() {
-        // Show all subcategories and components
-        document.querySelectorAll('[id*="-"]').forEach(element => {
-            if (element.id.includes('-') && !element.classList.contains('subcategory-toggle')) {
-                element.classList.add('hidden');
-            }
+        // Show all component links
+        document.querySelectorAll('nav a.component-link').forEach(link => {
+            link.style.display = 'block';
         });
-        
-        document.querySelectorAll('.subcategory-toggle svg').forEach(icon => {
-            icon.style.transform = 'rotate(0deg)';
-        });
-    }
-    
-    displaySearchResults(results) {
-        // Hide all components first
-        document.querySelectorAll('nav a').forEach(link => {
-            link.style.display = 'none';
-        });
-        
-        // Show matching components
-        results.forEach(result => {
-            const link = document.querySelector(`a[href*="category=${result.category}&subcategory=${result.subcategory}&component=${result.component}"]`);
-            if (link) {
-                link.style.display = 'block';
-                // Expand parent subcategory
-                const subcategoryId = `${result.category}-${result.subcategory}`;
-                const subcategory = document.getElementById(subcategoryId);
-                if (subcategory) {
-                    subcategory.classList.remove('hidden');
-                    const toggle = document.querySelector(`[data-target="${subcategoryId}"] svg`);
-                    if (toggle) {
-                        toggle.style.transform = 'rotate(180deg)';
-                    }
+
+        // Show all subcategory content divs and update their toggle icons to expanded
+        // In index.php, these divs have IDs like "category-subcategory" and class "ml-4 mt-1 space-y-1 hidden"
+        // A more robust selector for these content divs:
+        document.querySelectorAll('nav div[id*="-"][class*="ml-4"]').forEach(contentDiv => {
+            contentDiv.classList.remove('hidden');
+            const toggleButton = document.querySelector(`button.subcategory-toggle[data-target="${contentDiv.id}"]`);
+            if (toggleButton) {
+                const icon = toggleButton.querySelector('svg');
+                if (icon) {
+                    icon.style.transform = 'rotate(180deg)'; // Expanded state
                 }
             }
         });
     }
     
+    displaySearchResults(results) {
+        // Hide all component links first
+        document.querySelectorAll('nav a.component-link').forEach(link => {
+            link.style.display = 'none';
+        });
+        
+        // Hide all subcategory content divs and set their toggles to collapsed
+        document.querySelectorAll('nav div[id*="-"][class*="ml-4"]').forEach(contentDiv => {
+            contentDiv.classList.add('hidden');
+            const toggleButton = document.querySelector(`button.subcategory-toggle[data-target="${contentDiv.id}"]`);
+            if (toggleButton) {
+                const icon = toggleButton.querySelector('svg');
+                if (icon) {
+                    icon.style.transform = 'rotate(0deg)'; // Collapsed state
+                }
+            }
+        });
+
+        // Show matching components and expand their parent subcategories
+        results.forEach(result => {
+            // Use data attributes for a more reliable selection, similar to loadComponent
+            const link = document.querySelector(
+                `a.component-link[data-category="${result.category}"][data-subcategory="${result.subcategory}"][data-component="${result.component}"]`
+            );
+            if (link) {
+                link.style.display = 'block';
+
+                // Expand parent subcategory content div
+                const subcategoryId = `${result.category}-${result.subcategory}`; // This is the ID of the content div
+                const subcategoryContentDiv = document.getElementById(subcategoryId);
+                if (subcategoryContentDiv) {
+                    subcategoryContentDiv.classList.remove('hidden');
+                    // Update the toggle icon for this specific subcategory
+                    const toggleButton = document.querySelector(`button.subcategory-toggle[data-target="${subcategoryId}"]`);
+                    if (toggleButton) {
+                        const icon = toggleButton.querySelector('svg');
+                        if (icon) {
+                            icon.style.transform = 'rotate(180deg)'; // Expanded state
+                        }
+                    }
+                }
+            }
+        });
+
+        if (results.length === 0) {
+            // Optionally, display a "No results found" message in the sidebar
+            // For now, the sidebar will appear empty of component links, which is indicative.
+            console.log("No search results found.");
+        }
+    }
+    
     switchView(view) {
         this.currentView = view;
-        localStorage.setItem('view', view);
+        this.safeLocalStorageSetItem('view', view);
         
         const previewView = document.getElementById('preview-view');
         const codeView = document.getElementById('code-view');
         const splitView = document.getElementById('split-view');
+        const examplesView = document.getElementById('examples-view');
+
         const previewTab = document.getElementById('preview-tab');
         const codeTab = document.getElementById('code-tab');
         const splitTab = document.getElementById('split-tab');
+        const examplesTab = document.getElementById('examples-tab');
+
         const editorThemeToggle = document.getElementById('editor-theme-toggle');
         const splitControls = document.getElementById('split-controls');
         
@@ -418,9 +650,10 @@ class TailwindUIViewer {
         previewView?.classList.add('hidden');
         codeView?.classList.add('hidden');
         splitView?.classList.add('hidden');
+        examplesView?.classList.add('hidden');
         
         // Reset all tab styles
-        [previewTab, codeTab, splitTab].forEach(tab => {
+        [previewTab, codeTab, splitTab, examplesTab].forEach(tab => {
             if (tab) {
                 tab.classList.remove('bg-white', 'dark:bg-gray-800', 'text-gray-900', 'dark:text-white', 'shadow-sm');
                 tab.classList.add('text-gray-600', 'dark:text-gray-300');
@@ -428,7 +661,7 @@ class TailwindUIViewer {
         });
         
         // Show/hide controls based on view
-        if (view === 'code' || view === 'split') {
+        if (view === 'code' || view === 'split' || view === 'examples') { // Editor theme might be useful for example code display too
             editorThemeToggle?.classList.remove('hidden');
         } else {
             editorThemeToggle?.classList.add('hidden');
@@ -440,6 +673,7 @@ class TailwindUIViewer {
             splitControls?.classList.add('hidden');
         }
         
+        // Activate the selected view and tab
         if (view === 'preview') {
             previewView?.classList.remove('hidden');
             previewTab?.classList.add('bg-white', 'dark:bg-gray-800', 'text-gray-900', 'dark:text-white', 'shadow-sm');
@@ -448,19 +682,118 @@ class TailwindUIViewer {
             codeView?.classList.remove('hidden');
             codeTab?.classList.add('bg-white', 'dark:bg-gray-800', 'text-gray-900', 'dark:text-white', 'shadow-sm');
             codeTab?.classList.remove('text-gray-600', 'dark:text-gray-300');
-            this.loadCodeInEditor();
+            this.loadCodeInEditor(); // Assumes main editor for component code
         } else if (view === 'split') {
             splitView?.classList.remove('hidden');
             splitTab?.classList.add('bg-white', 'dark:bg-gray-800', 'text-gray-900', 'dark:text-white', 'shadow-sm');
             splitTab?.classList.remove('text-gray-600', 'dark:text-gray-300');
             this.loadCodeInSplitEditor();
             this.applySplitOrientation();
+        } else if (view === 'examples') {
+            examplesView?.classList.remove('hidden');
+            examplesTab?.classList.add('bg-white', 'dark:bg-gray-800', 'text-gray-900', 'dark:text-white', 'shadow-sm');
+            examplesTab?.classList.remove('text-gray-600', 'dark:text-gray-300');
+            this.renderComponentExamples();
         }
+    }
+
+    renderComponentExamples() {
+        const examplesContentArea = document.getElementById('examples-content-area');
+        if (!examplesContentArea) return;
+
+        examplesContentArea.innerHTML = ''; // Clear previous examples
+
+        if (!this.currentComponent || !this.currentComponent.examples || this.currentComponent.examples.length === 0) {
+            examplesContentArea.innerHTML = '<p class="text-gray-500 dark:text-gray-400">No examples available for this component.</p>';
+            return;
+        }
+
+        // For now, display each example with its name, an iframe preview, and a code block
+        this.currentComponent.examples.forEach((example, index) => {
+            const exampleContainer = document.createElement('div');
+            exampleContainer.className = 'mb-8 p-4 border border-gray-200 dark:border-gray-700 rounded-lg';
+
+            const exampleName = document.createElement('h3');
+            exampleName.className = 'text-lg font-semibold text-gray-800 dark:text-white mb-3';
+            exampleName.textContent = example.name || `Example ${index + 1}`;
+            exampleContainer.appendChild(exampleName);
+
+            // Iframe for preview
+            const iframeContainer = document.createElement('div');
+            iframeContainer.className = 'mb-4 h-96 border border-gray-200 dark:border-gray-700 rounded overflow-hidden';
+            const iframe = document.createElement('iframe');
+            iframe.className = 'w-full h-full';
+            iframe.srcdoc = this.generateFullHtmlForContent(example.html);
+            iframeContainer.appendChild(iframe);
+            exampleContainer.appendChild(iframeContainer);
+
+            // Code block (using Monaco if desired, or simple pre/code)
+            const codeTitle = document.createElement('h4');
+            codeTitle.className = 'text-md font-medium text-gray-700 dark:text-gray-300 mb-2';
+            codeTitle.textContent = 'HTML Code:';
+            exampleContainer.appendChild(codeTitle);
+
+            const codeBlockContainerId = `example-code-editor-${index}`;
+            const codeBlockDiv = document.createElement('div');
+            codeBlockDiv.id = codeBlockContainerId;
+            codeBlockDiv.className = 'h-64 border border-gray-200 dark:border-gray-700 rounded'; // Fixed height for editor
+            exampleContainer.appendChild(codeBlockDiv);
+
+            examplesContentArea.appendChild(exampleContainer);
+
+            // Initialize Monaco editor for this example's code
+            if (typeof monaco !== 'undefined' && typeof require !== 'undefined') {
+                 require(['vs/editor/editor.main'], () => {
+                    monaco.editor.create(document.getElementById(codeBlockContainerId), {
+                        value: example.html,
+                        language: 'html',
+                        theme: this.editorTheme, // Use existing editor theme
+                        automaticLayout: true,
+                        readOnly: true,
+                        minimap: { enabled: false },
+                        wordWrap: 'on'
+                    });
+                });
+            } else {
+                // Fallback to simple pre/code if Monaco not available
+                const pre = document.createElement('pre');
+                pre.className = 'bg-gray-100 dark:bg-gray-800 p-3 rounded overflow-x-auto text-sm';
+                const code = document.createElement('code');
+                code.textContent = example.html;
+                pre.appendChild(code);
+                codeBlockDiv.replaceWith(pre); // Replace the div meant for monaco
+            }
+        });
+    }
+
+    // Helper to generate full HTML for iframe srcdoc
+    generateFullHtmlForContent(content) {
+        return `
+            <!DOCTYPE html>
+            <html lang="en" class="${this.currentTheme === 'dark' ? 'dark' : ''}">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Example Preview</title>
+                <script src="https://cdn.tailwindcss.com"></script>
+                <script>
+                    tailwind.config = {
+                        darkMode: 'class',
+                        theme: { extend: { fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] }}}
+                    }
+                </script>
+                <style>body { font-family: 'Inter', system-ui, sans-serif; }</style>
+            </head>
+            <body class="bg-white dark:bg-gray-900 p-4">
+                ${content}
+            </body>
+            </html>
+        `;
     }
     
     toggleEditorTheme() {
         this.editorTheme = this.editorTheme === 'vs' ? 'vs-dark' : 'vs';
-        localStorage.setItem('editorTheme', this.editorTheme);
+        this.safeLocalStorageSetItem('editorTheme', this.editorTheme);
         
         // Update main editor theme
         if (this.editor) {
@@ -770,14 +1103,24 @@ class TailwindUIViewer {
             const response = await fetch(`api/component-data.php?category=${category}&subcategory=${subcategory}&component=${component}`);
             if (response.ok) {
                 this.currentComponent = await response.json();
-                this.updateCodeEditor();
+            } else {
+                console.error(`Failed to load component data: ${response.status} ${response.statusText}`);
+                this.showToast(`Error loading component data (${response.status}). Component view may be outdated.`, 'error');
+                this.currentComponent = null; // Explicitly set to null on failure
             }
             
+            // Always attempt to update editor, it will handle null currentComponent
+            this.updateCodeEditor();
+
             // Update URL without page reload
+            // Pass all relevant parameters to keep the URL fully representative
             this.updateURL({
                 category: category,
                 subcategory: subcategory,
-                component: component
+                component: component,
+                theme: this.currentTheme,
+                width: this.currentWidth,
+                breakpoint: this.currentBreakpoint
             });
             
         } catch (error) {
@@ -787,16 +1130,18 @@ class TailwindUIViewer {
     }
     
     updateCodeEditor() {
-        if (this.editor && this.currentComponent) {
-            this.editor.setValue(this.currentComponent.html || '');
+        const codeToSet = this.currentComponent ? this.currentComponent.html || '' : '// No component loaded or error fetching component data.';
+
+        if (this.editor) {
+            this.editor.setValue(codeToSet);
         }
         
-        if (this.splitEditor && this.currentComponent) {
-            this.splitEditor.setValue(this.currentComponent.html || '');
+        if (this.splitEditor) {
+            this.splitEditor.setValue(codeToSet);
         }
         
-        if (this.splitEditorVertical && this.currentComponent) {
-            this.splitEditorVertical.setValue(this.currentComponent.html || '');
+        if (this.splitEditorVertical) {
+            this.splitEditorVertical.setValue(codeToSet);
         }
     }
     
@@ -816,7 +1161,7 @@ class TailwindUIViewer {
     
     setSplitOrientation(orientation) {
         this.splitOrientation = orientation;
-        localStorage.setItem('splitOrientation', orientation);
+        this.safeLocalStorageSetItem('splitOrientation', orientation);
         
         const horizontalBtn = document.getElementById('horizontal-split');
         const verticalBtn = document.getElementById('vertical-split');
@@ -968,7 +1313,7 @@ class TailwindUIViewer {
                 previewSection.style.flex = `1 1 ${percentage}%`;
                 codeSection.style.flex = `1 1 ${100 - percentage}%`;
                 this.previewSectionSize = percentage.toString();
-                localStorage.setItem('previewSectionSize', this.previewSectionSize);
+                this.safeLocalStorageSetItem('previewSectionSize', this.previewSectionSize);
             }
         });
         
@@ -1023,7 +1368,7 @@ class TailwindUIViewer {
                 previewSection.style.flex = `0 0 ${newLeftWidth}px`;
                 codeSection.style.flex = `1 1 auto`;
                 this.previewSectionSize = percentage.toString();
-                localStorage.setItem('previewSectionSize', this.previewSectionSize);
+                this.safeLocalStorageSetItem('previewSectionSize', this.previewSectionSize);
                 
                 // Update breakpoint and width display based on actual preview width
                 this.updateBreakpointFromPreviewSize(newLeftWidth);
@@ -1344,8 +1689,8 @@ class TailwindUIViewer {
         this.currentWidth = newWidth;
         
         // Save to localStorage
-        localStorage.setItem('breakpoint', this.currentBreakpoint);
-        localStorage.setItem('width', this.currentWidth.toString());
+        this.safeLocalStorageSetItem('breakpoint', this.currentBreakpoint);
+        this.safeLocalStorageSetItem('width', this.currentWidth.toString());
         
         // Update UI elements
         this.updateBreakpointButtons();
@@ -1380,10 +1725,17 @@ class TailwindUIViewer {
     
     updateURL(params) {
         const url = new URL(window.location);
+        // Clear existing relevant params before setting new ones to avoid conflicts
+        // or ensure all relevant params are always passed in `params` object.
+        // For now, direct set/update.
         Object.keys(params).forEach(key => {
-            url.searchParams.set(key, params[key]);
+            if (params[key] !== undefined && params[key] !== null) {
+                url.searchParams.set(key, params[key]);
+            } else {
+                url.searchParams.delete(key); // Remove if value is null/undefined
+            }
         });
-        window.history.replaceState({}, '', url);
+        window.history.replaceState({}, '', url.toString());
     }
 }
 

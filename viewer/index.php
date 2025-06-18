@@ -64,7 +64,22 @@
 
             <!-- Component Tree -->
             <div class="flex-1 overflow-y-auto">
-                <nav class="p-4 space-y-2">
+                <nav class="p-4 space-y-4">
+                    <!-- Favorites Section -->
+                    <div class="space-y-1">
+                        <button class="flex items-center justify-between w-full text-left text-sm font-medium text-gray-900 dark:text-white uppercase tracking-wider py-1 subcategory-toggle"
+                                data-target="favorites-list-content">
+                            <span>Favorites</span>
+                            <svg class="w-4 h-4 transform transition-transform rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <div id="favorites-list-content" class="ml-4 mt-1 space-y-1">
+                            <!-- Favorite items will be populated by JS -->
+                            <p class="text-xs text-gray-500 dark:text-gray-400 hidden" id="no-favorites-message">No favorites yet. Click the star to add.</p>
+                        </div>
+                    </div>
+
                     <?php foreach ($components as $cat => $subcategories): ?>
                         <div class="space-y-1">
                             <h3 class="text-sm font-medium text-gray-900 dark:text-white uppercase tracking-wider">
@@ -81,13 +96,25 @@
                                     </button>
                                     <div id="<?php echo $cat . '-' . $subcat; ?>" class="ml-4 mt-1 space-y-1 hidden">
                                         <?php foreach ($items as $item): ?>
-                                            <a href="?category=<?php echo $cat; ?>&subcategory=<?php echo $subcat; ?>&component=<?php echo $item['slug']; ?>&theme=<?php echo $theme; ?>&breakpoint=<?php echo $breakpoint; ?>"
-                                               class="component-link block text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 py-1 px-2 rounded <?php echo ($component === $item['slug']) ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : ''; ?>"
-                                               data-category="<?php echo $cat; ?>"
-                                               data-subcategory="<?php echo $subcat; ?>"
-                                               data-component="<?php echo $item['slug']; ?>">
-                                                <?php echo $item['name']; ?>
-                                            </a>
+                                            <div class="flex items-center justify-between group">
+                                                <a href="?category=<?php echo $cat; ?>&subcategory=<?php echo $subcat; ?>&component=<?php echo $item['slug']; ?>&theme=<?php echo $theme; ?>&breakpoint=<?php echo $breakpoint; ?>"
+                                                   class="component-link flex-grow text-sm text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 py-1 px-2 rounded <?php echo ($component === $item['slug']) ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : ''; ?>"
+                                                   data-category="<?php echo $cat; ?>"
+                                                   data-subcategory="<?php echo $subcat; ?>"
+                                                   data-component="<?php echo $item['slug']; ?>">
+                                                    <?php echo $item['name']; ?>
+                                                </a>
+                                                <button class="favorite-toggle p-1 rounded-md text-gray-400 hover:text-yellow-500 dark:hover:text-yellow-400 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
+                                                        data-category="<?php echo $cat; ?>"
+                                                        data-subcategory="<?php echo $subcat; ?>"
+                                                        data-component-slug="<?php echo $item['slug']; ?>"
+                                                        title="Toggle favorite">
+                                                    <!-- Star icon will be filled by JS if favorited -->
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.846 5.671a1 1 0 00.95.69h5.969c.969 0 1.371 1.24.588 1.81l-4.828 3.522a1 1 0 00-.364 1.118l1.846 5.671c.3.921-.755 1.688-1.54 1.118l-4.828-3.522a1 1 0 00-1.176 0l-4.828 3.522c-.784.57-1.838-.197-1.539-1.118l1.846-5.671a1 1 0 00-.364-1.118L2.28 11.1c-.783-.57-.38-1.81.588-1.81h5.969a1 1 0 00.95-.69L11.049 2.927z"></path>
+                                                    </svg>
+                                                </button>
+                                            </div>
                                         <?php endforeach; ?>
                                     </div>
                                 </div>
@@ -172,10 +199,13 @@
                             <button id="split-tab" class="view-tab px-3 py-1 text-sm rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm" title="Preview + Code">
                                 Split
                             </button>
+                            <button id="examples-tab" class="view-tab px-3 py-1 text-sm rounded-md text-gray-600 dark:text-gray-300" title="Usage Examples">
+                                Examples
+                            </button>
                         </div>
 
                         <!-- Split View Controls (only visible in split view) -->
-                        <div id="split-controls" class="flex items-center space-x-2 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+                        <div id="split-controls" class="hidden flex items-center space-x-2 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
                             <button id="horizontal-split" class="split-orientation-btn px-2 py-1 text-xs rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm" title="Horizontal split">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 18h16"></path>
@@ -207,8 +237,11 @@
 
                         <!-- Copy Button -->
                         <?php if ($currentComponent): ?>
-                            <button id="copy-code" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium">
+                            <button id="copy-code" class="px-3 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium transition-colors duration-200" title="Copy HTML code">
                                 Copy Code
+                            </button>
+                            <button id="download-html" class="px-3 py-1.5 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm font-medium transition-colors duration-200" title="Download component HTML">
+                                Download
                             </button>
                         <?php endif; ?>
                     </div>
@@ -277,6 +310,15 @@
                             <div id="code-section-vertical" class="flex-1 min-w-0" style="flex: 1 1 50%;">
                                 <div id="split-code-editor-vertical" class="h-full"></div>
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Examples View -->
+                    <div id="examples-view" class="h-full hidden p-4 md:p-8 overflow-y-auto">
+                        <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">Usage Examples</h2>
+                        <div id="examples-content-area">
+                            <!-- Examples will be rendered here by JS -->
+                            <p class="text-gray-500 dark:text-gray-400">No examples available for this component, or component not loaded.</p>
                         </div>
                     </div>
                 <?php else: ?>
