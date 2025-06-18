@@ -1,209 +1,251 @@
-class ComponentViewer {
+/**
+ * Main application JavaScript for Tailwind UI Blocks Viewer
+ */
+
+class TailwindUIViewer {
     constructor() {
-        this.currentComponent = null;
+        this.currentComponent = window.currentComponent || null;
         this.currentTheme = localStorage.getItem('theme') || 'light';
-        this.currentView = localStorage.getItem('view') || 'split';
         this.currentBreakpoint = localStorage.getItem('breakpoint') || 'desktop';
         this.currentWidth = parseInt(localStorage.getItem('width')) || 1200;
+        this.sidebarOpen = true;
+        this.currentView = localStorage.getItem('view') || 'split';
+        this.splitOrientation = localStorage.getItem('splitOrientation') || 'horizontal';
         this.editor = null;
         this.splitEditor = null;
         this.splitEditorVertical = null;
-        this.editorTheme = localStorage.getItem('editorTheme') || 'vs';
-        this.splitOrientation = localStorage.getItem('splitOrientation') || 'horizontal';
+        this.editorTheme = localStorage.getItem('editorTheme') || 'vs-dark';
+        this.scrollPosition = 0;
         this.isComponentModified = false;
         this.previewSectionSize = localStorage.getItem('previewSectionSize') || '50';
-        this.scrollPosition = 0;
-        this.updateTimeout = null;
         
         this.init();
     }
     
     init() {
-        console.log('ComponentViewer initializing...');
-        
-        // Apply initial theme
-        this.applyTheme();
-        
-        // Initialize all components
-        this.initThemeToggle();
-        this.initSearch();
-        this.initNavigation();
-        this.initBreakpointButtons();
+        this.initTheme();
+        this.initEventListeners();
+        this.initSidebar();
+        this.initBreakpoints();
         this.initWidthAdjuster();
-        this.initViewTabs();
-        this.initSplitView();
+        this.initSearch();
         this.initMonacoEditor();
-        this.initResizers();
+        this.initSplitView();
         this.initComponentActions();
-        
-        // Load initial component if specified in URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const category = urlParams.get('category');
-        const subcategory = urlParams.get('subcategory');
-        const component = urlParams.get('component');
-        
-        if (category && subcategory && component) {
-            this.loadComponent(category, subcategory, component);
+        this.initResizers();
+        this.restoreSettings();
+        this.updateBreakpointDisplay();
+    }
+    
+    restoreSettings() {
+        // Restore width slider
+        const widthSlider = document.getElementById('width-slider');
+        if (widthSlider) {
+            widthSlider.value = this.currentWidth;
         }
         
-        // Set initial view
-        this.switchView(this.currentView);
+        // Restore breakpoint buttons
+        this.updateBreakpointButtons();
         
         // Restore split orientation
         this.setSplitOrientation(this.splitOrientation);
         
-        console.log('ComponentViewer initialized successfully');
+        // Restore view
+        this.switchView(this.currentView);
+        
+        // Update containers with saved width
+        this.updateContainerWidths();
+        
+        // Restore split section sizes
+        this.restoreSplitSizes();
+        
+        // Update component preview with saved theme
+        this.updateComponentPreview();
     }
     
-    applyTheme() {
-        if (this.currentTheme === 'dark') {
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
+    restoreSplitSizes() {
+        const size = parseFloat(this.previewSectionSize);
+        
+        // Restore horizontal split sizes
+        const previewSection = document.getElementById('preview-section');
+        const codeSection = document.getElementById('code-section');
+        if (previewSection && codeSection) {
+            previewSection.style.flex = `1 1 ${size}%`;
+            codeSection.style.flex = `1 1 ${100 - size}%`;
         }
         
-        // Update theme toggle icon
-        const themeIcon = document.querySelector('#theme-toggle svg');
-        if (themeIcon) {
-            if (this.currentTheme === 'dark') {
-                themeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>';
-            } else {
-                themeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>';
+        // Restore vertical split sizes - use pixel-based approach for better control
+        const previewSectionVertical = document.getElementById('preview-section-vertical');
+        const codeSectionVertical = document.getElementById('code-section-vertical');
+        if (previewSectionVertical && codeSectionVertical) {
+            // Calculate pixel width based on container
+            const container = document.getElementById('vertical-split-container');
+            if (container) {
+                const containerWidth = container.getBoundingClientRect().width;
+                const previewWidth = (containerWidth * size) / 100;
+                previewSectionVertical.style.flex = `0 0 ${previewWidth}px`;
+                codeSectionVertical.style.flex = `1 1 auto`;
             }
         }
     }
     
-    initThemeToggle() {
+    initTheme() {
         const themeToggle = document.getElementById('theme-toggle');
         if (themeToggle) {
-            themeToggle.addEventListener('click', () => {
-                this.currentTheme = this.currentTheme === 'light' ? 'dark' : 'light';
-                localStorage.setItem('theme', this.currentTheme);
-                this.applyTheme();
-                this.updateComponentPreview();
-            });
-        }
-    }
-    
-    initSearch() {
-        const searchInput = document.getElementById('search-input');
-        if (searchInput) {
-            searchInput.addEventListener('input', (e) => {
-                this.searchComponents(e.target.value);
-            });
-        }
-    }
-    
-    async searchComponents(query) {
-        if (query.length < 2) {
-            // Reload the page to show all components
-            window.location.reload();
-            return;
+            themeToggle.addEventListener('click', () => this.toggleTheme());
         }
         
-        try {
-            const response = await fetch(`api/search.php?q=${encodeURIComponent(query)}`);
-            const results = await response.json();
-            this.displaySearchResults(results);
-        } catch (error) {
-            console.error('Search error:', error);
+        // Apply saved theme
+        if (this.currentTheme === 'dark') {
+            document.documentElement.classList.add('dark');
         }
+        
+        // Update theme toggle icon
+        this.updateThemeToggleIcon();
     }
     
-    displaySearchResults(results) {
-        const sidebar = document.querySelector('nav.p-4');
-        if (!sidebar) return;
+    toggleTheme() {
+        const isDark = document.documentElement.classList.contains('dark');
         
-        let html = '<div class="p-4"><h3 class="text-sm font-medium text-gray-900 dark:text-white mb-2">Search Results</h3>';
-        
-        if (results.length === 0) {
-            html += '<p class="text-sm text-gray-500 dark:text-gray-400">No components found.</p>';
+        if (isDark) {
+            document.documentElement.classList.remove('dark');
+            localStorage.setItem('theme', 'light');
+            this.currentTheme = 'light';
         } else {
-            results.forEach(result => {
-                html += `
-                    <div class="mb-2">
-                        <button class="component-link w-full text-left p-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
-                                data-category="${result.category}" data-subcategory="${result.subcategory}" data-component="${result.component}">
-                            <div class="font-medium">${result.name}</div>
-                            <div class="text-xs text-gray-500 dark:text-gray-400">${result.category}/${result.subcategory}</div>
-                        </button>
-                    </div>
-                `;
-            });
+            document.documentElement.classList.add('dark');
+            localStorage.setItem('theme', 'dark');
+            this.currentTheme = 'dark';
         }
         
-        html += '</div>';
-        sidebar.innerHTML = html;
-        
-        // Reattach event listeners
-        this.attachComponentLinks();
+        // Update component preview
+        this.updateComponentPreview();
     }
     
-    initNavigation() {
-        console.log('Initializing navigation...');
+    initEventListeners() {
+        // Component link handlers
+        this.initComponentLinks();
         
-        // Initialize subcategory toggles
-        const toggles = document.querySelectorAll('.subcategory-toggle');
-        console.log('Found', toggles.length, 'subcategory toggles');
+        // View toggle buttons
+        const previewTab = document.getElementById('preview-tab');
+        const codeTab = document.getElementById('code-tab');
+        const splitTab = document.getElementById('split-tab');
         
-        toggles.forEach(toggle => {
+        if (previewTab) {
+            previewTab.addEventListener('click', () => this.switchView('preview'));
+        }
+        
+        if (codeTab) {
+            codeTab.addEventListener('click', () => this.switchView('code'));
+        }
+        
+        if (splitTab) {
+            splitTab.addEventListener('click', () => this.switchView('split'));
+        }
+        
+        // Editor theme toggle
+        const editorThemeToggle = document.getElementById('editor-theme-toggle');
+        if (editorThemeToggle) {
+            editorThemeToggle.addEventListener('click', () => this.toggleEditorTheme());
+        }
+        
+        // Copy code button
+        const copyButton = document.getElementById('copy-code');
+        if (copyButton) {
+            copyButton.addEventListener('click', () => this.copyCode());
+        }
+        
+        // Sidebar toggle
+        const sidebarToggle = document.getElementById('sidebar-toggle');
+        if (sidebarToggle) {
+            sidebarToggle.addEventListener('click', () => this.toggleSidebar());
+        }
+    }
+    
+    initSidebar() {
+        // Subcategory toggles
+        const subcategoryToggles = document.querySelectorAll('.subcategory-toggle');
+        subcategoryToggles.forEach(toggle => {
             toggle.addEventListener('click', (e) => {
                 e.preventDefault();
-                console.log('Toggle clicked:', toggle.dataset.target);
+                const targetId = toggle.getAttribute('data-target');
+                const target = document.getElementById(targetId);
+                const icon = toggle.querySelector('svg');
                 
-                const target = toggle.dataset.target;
-                const targetElement = document.getElementById(target);
-                const arrow = toggle.querySelector('svg');
-                
-                if (targetElement) {
-                    if (targetElement.classList.contains('hidden')) {
-                        targetElement.classList.remove('hidden');
-                        arrow.style.transform = 'rotate(0deg)';
-                        console.log('Expanded:', target);
-                    } else {
-                        targetElement.classList.add('hidden');
-                        arrow.style.transform = 'rotate(-90deg)';
-                        console.log('Collapsed:', target);
-                    }
-                } else {
-                    console.log('Target element not found:', target);
+                if (target) {
+                    target.classList.toggle('hidden');
+                    icon.style.transform = target.classList.contains('hidden') ? 
+                        'rotate(0deg)' : 'rotate(180deg)';
                 }
             });
         });
         
-        // Initialize component links
-        this.attachComponentLinks();
+        // Auto-expand current category
+        if (this.currentComponent) {
+            const currentCategory = this.currentComponent.category;
+            const currentSubcategory = this.currentComponent.subcategory;
+            const targetId = `${currentCategory}-${currentSubcategory}`;
+            const target = document.getElementById(targetId);
+            
+            if (target) {
+                target.classList.remove('hidden');
+                const toggle = document.querySelector(`[data-target="${targetId}"]`);
+                if (toggle) {
+                    const icon = toggle.querySelector('svg');
+                    icon.style.transform = 'rotate(180deg)';
+                }
+            }
+        }
     }
     
-    attachComponentLinks() {
-        document.querySelectorAll('.component-link').forEach(link => {
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                const category = link.dataset.category;
-                const subcategory = link.dataset.subcategory;
-                const component = link.dataset.component;
-                this.loadComponent(category, subcategory, component);
+    toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        if (sidebar) {
+            if (this.sidebarOpen) {
+                sidebar.style.transform = 'translateX(-100%)';
+                this.sidebarOpen = false;
+            } else {
+                sidebar.style.transform = 'translateX(0)';
+                this.sidebarOpen = true;
+            }
+        }
+    }
+    
+    initBreakpoints() {
+        const breakpointButtons = document.querySelectorAll('.breakpoint-btn');
+        breakpointButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const breakpoint = button.getAttribute('data-breakpoint');
+                const width = button.getAttribute('data-width');
+                this.setBreakpoint(breakpoint, width);
             });
         });
     }
     
-    initBreakpointButtons() {
-        document.querySelectorAll('.breakpoint-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const breakpoint = btn.dataset.breakpoint;
-                this.setBreakpoint(breakpoint);
-            });
-        });
-    }
-    
-    setBreakpoint(breakpoint) {
+    setBreakpoint(breakpoint, width) {
         this.currentBreakpoint = breakpoint;
-        localStorage.setItem('breakpoint', breakpoint);
+        this.currentWidth = parseInt(width);
         
-        // Update width based on breakpoint
-        const widths = { mobile: 375, tablet: 768, desktop: 1200 };
-        this.currentWidth = widths[breakpoint];
+        // Save to localStorage
+        localStorage.setItem('breakpoint', this.currentBreakpoint);
         localStorage.setItem('width', this.currentWidth);
+        
+        // Update active button
+        document.querySelectorAll('.breakpoint-btn').forEach(btn => {
+            btn.classList.remove('bg-white', 'dark:bg-gray-800', 'text-gray-900', 'dark:text-white', 'shadow-sm');
+            btn.classList.add('text-gray-600', 'dark:text-gray-300');
+        });
+        
+        const activeButton = document.querySelector(`[data-breakpoint="${breakpoint}"]`);
+        if (activeButton) {
+            activeButton.classList.add('bg-white', 'dark:bg-gray-800', 'text-gray-900', 'dark:text-white', 'shadow-sm');
+            activeButton.classList.remove('text-gray-600', 'dark:text-gray-300');
+        }
+        
+        // Update width slider
+        const widthSlider = document.getElementById('width-slider');
+        if (widthSlider) {
+            widthSlider.value = this.currentWidth;
+        }
         
         // Update container widths
         this.updateContainerWidths();
@@ -243,43 +285,6 @@ class ComponentViewer {
         }
     }
     
-    updateBreakpointFromPreviewSize(customWidth = null) {
-        let containerWidth = customWidth;
-        
-        // If no custom width provided, get the actual preview container size
-        if (!containerWidth) {
-            let previewContainer = null;
-            if (this.splitOrientation === 'horizontal') {
-                previewContainer = document.getElementById('split-component-container');
-            } else {
-                previewContainer = document.getElementById('split-component-container-vertical');
-            }
-            
-            if (previewContainer) {
-                containerWidth = previewContainer.getBoundingClientRect().width;
-            }
-        }
-        
-        if (containerWidth) {
-            // Update current width based on actual container size
-            const newWidth = Math.round(containerWidth);
-            if (Math.abs(newWidth - this.currentWidth) > 10) {
-                this.currentWidth = newWidth;
-                localStorage.setItem('width', this.currentWidth);
-                
-                // Update breakpoint based on new width
-                this.updateBreakpointFromWidth();
-                this.updateBreakpointDisplay();
-                
-                // Update width slider
-                const widthSlider = document.getElementById('width-slider');
-                if (widthSlider) {
-                    widthSlider.value = this.currentWidth;
-                }
-            }
-        }
-    }
-    
     updateBreakpointButtons() {
         // Update active button
         document.querySelectorAll('.breakpoint-btn').forEach(btn => {
@@ -297,8 +302,7 @@ class ComponentViewer {
     updateContainerWidths() {
         const containers = [
             document.getElementById('component-container'),
-            document.getElementById('split-component-container'),
-            document.getElementById('split-component-container-vertical')
+            document.getElementById('split-component-container')
         ];
         
         containers.forEach(container => {
@@ -322,26 +326,78 @@ class ComponentViewer {
         }
         
         if (currentWidth) {
-            currentWidth.textContent = `${this.currentWidth}px`;
+            currentWidth.textContent = this.currentWidth + 'px';
         }
         
         if (widthDisplay) {
-            widthDisplay.textContent = `${this.currentWidth}px`;
-        }
-        
-        // Update width slider
-        const widthSlider = document.getElementById('width-slider');
-        if (widthSlider) {
-            widthSlider.value = this.currentWidth;
+            widthDisplay.textContent = this.currentWidth + 'px';
         }
     }
     
-    initViewTabs() {
-        document.querySelectorAll('.view-tab').forEach(tab => {
-            tab.addEventListener('click', () => {
-                const view = tab.id.replace('-tab', '');
-                this.switchView(view);
+    initSearch() {
+        const searchInput = document.getElementById('search-input');
+        if (searchInput) {
+            let searchTimeout;
+            searchInput.addEventListener('input', (e) => {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    this.performSearch(e.target.value);
+                }, 300);
             });
+        }
+    }
+    
+    async performSearch(query) {
+        if (!query.trim()) {
+            // Show all components
+            this.showAllComponents();
+            return;
+        }
+        
+        try {
+            const response = await fetch(`api/search.php?q=${encodeURIComponent(query)}`);
+            const results = await response.json();
+            this.displaySearchResults(results);
+        } catch (error) {
+            console.error('Search error:', error);
+        }
+    }
+    
+    showAllComponents() {
+        // Show all subcategories and components
+        document.querySelectorAll('[id*="-"]').forEach(element => {
+            if (element.id.includes('-') && !element.classList.contains('subcategory-toggle')) {
+                element.classList.add('hidden');
+            }
+        });
+        
+        document.querySelectorAll('.subcategory-toggle svg').forEach(icon => {
+            icon.style.transform = 'rotate(0deg)';
+        });
+    }
+    
+    displaySearchResults(results) {
+        // Hide all components first
+        document.querySelectorAll('nav a').forEach(link => {
+            link.style.display = 'none';
+        });
+        
+        // Show matching components
+        results.forEach(result => {
+            const link = document.querySelector(`a[href*="category=${result.category}&subcategory=${result.subcategory}&component=${result.component}"]`);
+            if (link) {
+                link.style.display = 'block';
+                // Expand parent subcategory
+                const subcategoryId = `${result.category}-${result.subcategory}`;
+                const subcategory = document.getElementById(subcategoryId);
+                if (subcategory) {
+                    subcategory.classList.remove('hidden');
+                    const toggle = document.querySelector(`[data-target="${subcategoryId}"] svg`);
+                    if (toggle) {
+                        toggle.style.transform = 'rotate(180deg)';
+                    }
+                }
+            }
         });
     }
     
@@ -422,21 +478,11 @@ class ComponentViewer {
     }
     
     initMonacoEditor() {
-        // Wait for Monaco loader to be available
         if (typeof require !== 'undefined') {
-            try {
-                require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' }});
-                require(['vs/editor/editor.main'], () => {
-                    this.createEditor();
-                });
-            } catch (error) {
-                console.warn('Monaco editor failed to initialize:', error);
-            }
-        } else {
-            // Monaco loader not ready yet, wait and retry
-            setTimeout(() => {
-                this.initMonacoEditor();
-            }, 100);
+            require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' }});
+            require(['vs/editor/editor.main'], () => {
+                this.createEditor();
+            });
         }
     }
     
@@ -452,21 +498,43 @@ class ComponentViewer {
                 wordWrap: 'on',
                 lineNumbers: 'on',
                 folding: true,
-                scrollBeyondLastLine: false
+                scrollBeyondLastLine: false,
+                fontSize: 14,
+                fontFamily: 'Monaco, Menlo, "Ubuntu Mono", monospace'
             });
             
-            // Add change listener for live preview
+            // Update editor theme when theme changes
             this.editor.onDidChangeModelContent(() => {
-                this.isComponentModified = true;
-                this.updateLivePreview();
+                // Auto-save changes (optional)
+                // this.saveComponentChanges();
             });
         }
-        
-        // Initialize editor theme toggle
-        const editorThemeToggle = document.getElementById('editor-theme-toggle');
-        if (editorThemeToggle) {
-            editorThemeToggle.addEventListener('click', () => {
-                this.toggleEditorTheme();
+    }
+    
+    createSplitEditor() {
+        const splitEditorContainer = document.getElementById('split-code-editor');
+        if (splitEditorContainer && this.currentComponent) {
+            this.splitEditor = monaco.editor.create(splitEditorContainer, {
+                value: this.currentComponent.html || '',
+                language: 'html',
+                theme: this.editorTheme,
+                automaticLayout: true,
+                minimap: { enabled: false },
+                wordWrap: 'on',
+                lineNumbers: 'on',
+                folding: true,
+                scrollBeyondLastLine: false,
+                fontSize: 14,
+                fontFamily: 'Monaco, Menlo, "Ubuntu Mono", monospace'
+            });
+            
+            // Live update functionality with debouncing
+            let updateTimeout;
+            this.splitEditor.onDidChangeModelContent(() => {
+                clearTimeout(updateTimeout);
+                updateTimeout = setTimeout(() => {
+                    this.updateLivePreview();
+                }, 300);
             });
         }
     }
@@ -474,6 +542,7 @@ class ComponentViewer {
     loadCodeInEditor() {
         if (this.editor && this.currentComponent) {
             this.editor.setValue(this.currentComponent.html || '');
+            this.editor.updateOptions({ theme: this.editorTheme });
         }
     }
     
@@ -494,20 +563,11 @@ class ComponentViewer {
     }
     
     updateLivePreview() {
-        if (this.currentView === 'split') {
-            let code = '';
-            let iframe = null;
+        if (this.splitEditor && this.currentView === 'split') {
+            const code = this.splitEditor.getValue();
+            const iframe = document.getElementById('split-component-frame');
             
-            // Get code from the appropriate editor
-            if (this.splitOrientation === 'horizontal' && this.splitEditor) {
-                code = this.splitEditor.getValue();
-                iframe = document.getElementById('split-component-frame');
-            } else if (this.splitOrientation === 'vertical' && this.splitEditorVertical) {
-                code = this.splitEditorVertical.getValue();
-                iframe = document.getElementById('split-component-frame-vertical');
-            }
-            
-            if (iframe && code) {
+            if (iframe) {
                 // Store current scroll position
                 try {
                     if (iframe.contentWindow && iframe.contentWindow.document) {
@@ -618,62 +678,130 @@ class ComponentViewer {
     }
     
     updateComponentPreview() {
-        const frames = [
-            document.getElementById('component-frame'),
-            document.getElementById('split-component-frame'),
-            document.getElementById('split-component-frame-vertical')
-        ];
+        const iframe = document.getElementById('component-frame');
+        const splitIframe = document.getElementById('split-component-frame');
         
-        frames.forEach(frame => {
-            if (frame && frame.src) {
-                const url = new URL(frame.src);
-                url.searchParams.set('theme', this.currentTheme);
-                frame.src = url.toString();
+        if (iframe && this.currentComponent) {
+            const currentSrc = iframe.src;
+            const url = new URL(currentSrc);
+            url.searchParams.set('theme', this.currentTheme);
+            iframe.src = url.toString();
+        }
+        
+        if (splitIframe && this.currentComponent) {
+            const currentSrc = splitIframe.src;
+            const url = new URL(currentSrc);
+            url.searchParams.set('theme', this.currentTheme);
+            splitIframe.src = url.toString();
+        }
+        
+        // Update theme toggle icon
+        this.updateThemeToggleIcon();
+    }
+    
+    updateThemeToggleIcon() {
+        const themeToggle = document.getElementById('theme-toggle');
+        if (themeToggle) {
+            const sunIcon = themeToggle.querySelector('.sun-icon');
+            const moonIcon = themeToggle.querySelector('.moon-icon');
+            
+            if (this.currentTheme === 'dark') {
+                if (sunIcon) sunIcon.style.display = 'none';
+                if (moonIcon) moonIcon.style.display = 'block';
+            } else {
+                if (sunIcon) sunIcon.style.display = 'block';
+                if (moonIcon) moonIcon.style.display = 'none';
+            }
+        }
+    }
+    
+    initComponentLinks() {
+        // Handle component link clicks
+        document.addEventListener('click', (e) => {
+            const componentLink = e.target.closest('.component-link');
+            if (componentLink) {
+                e.preventDefault();
+                
+                const category = componentLink.dataset.category;
+                const subcategory = componentLink.dataset.subcategory;
+                const component = componentLink.dataset.component;
+                
+                this.loadComponent(category, subcategory, component);
             }
         });
     }
     
     async loadComponent(category, subcategory, component) {
         try {
-            const response = await fetch(`api/component-data.php?category=${category}&subcategory=${subcategory}&component=${component}`);
-            const data = await response.json();
+            // Update active state in sidebar
+            document.querySelectorAll('.component-link').forEach(link => {
+                link.classList.remove('bg-blue-50', 'dark:bg-blue-900/20', 'text-blue-600', 'dark:text-blue-400');
+            });
             
-            if (data.success) {
-                this.currentComponent = data.component;
-                this.updateComponentDisplay();
-                this.updateURL({ category, subcategory, component });
-            } else {
-                console.error('Failed to load component:', data.message);
+            const activeLink = document.querySelector(`.component-link[data-category="${category}"][data-subcategory="${subcategory}"][data-component="${component}"]`);
+            if (activeLink) {
+                activeLink.classList.add('bg-blue-50', 'dark:bg-blue-900/20', 'text-blue-600', 'dark:text-blue-400');
             }
+            
+            // Update iframes with current settings preserved
+            const iframe = document.getElementById('component-frame');
+            const splitIframe = document.getElementById('split-component-frame');
+            
+            const params = new URLSearchParams({
+                category: category,
+                subcategory: subcategory,
+                component: component,
+                theme: this.currentTheme,
+                width: this.currentWidth,
+                breakpoint: this.currentBreakpoint
+            });
+            
+            const newSrc = `api/render.php?${params.toString()}`;
+            
+            if (iframe) {
+                iframe.src = newSrc;
+            }
+            
+            if (splitIframe) {
+                splitIframe.src = newSrc;
+            }
+            
+            // Load component data for code editor
+            const response = await fetch(`api/component-data.php?category=${category}&subcategory=${subcategory}&component=${component}`);
+            if (response.ok) {
+                this.currentComponent = await response.json();
+                this.updateCodeEditor();
+            }
+            
+            // Update URL without page reload
+            this.updateURL({
+                category: category,
+                subcategory: subcategory,
+                component: component
+            });
+            
         } catch (error) {
             console.error('Error loading component:', error);
+            this.showToast('Failed to load component', 'error');
         }
     }
     
-    updateComponentDisplay() {
-        // Update component frames
-        this.updateComponentPreview();
-        
-        // Update editors if they exist
-        if (this.editor) {
+    updateCodeEditor() {
+        if (this.editor && this.currentComponent) {
             this.editor.setValue(this.currentComponent.html || '');
         }
         
-        if (this.splitEditor) {
+        if (this.splitEditor && this.currentComponent) {
             this.splitEditor.setValue(this.currentComponent.html || '');
         }
         
-        if (this.splitEditorVertical) {
+        if (this.splitEditorVertical && this.currentComponent) {
             this.splitEditorVertical.setValue(this.currentComponent.html || '');
         }
-        
-        // Update container widths
-        this.updateContainerWidths();
-        this.updateBreakpointDisplay();
     }
     
-    // Split view methods
     initSplitView() {
+        // Split orientation toggle
         const horizontalSplit = document.getElementById('horizontal-split');
         const verticalSplit = document.getElementById('vertical-split');
         
@@ -685,15 +813,15 @@ class ComponentViewer {
             verticalSplit.addEventListener('click', () => this.setSplitOrientation('vertical'));
         }
     }
-
+    
     setSplitOrientation(orientation) {
         this.splitOrientation = orientation;
         localStorage.setItem('splitOrientation', orientation);
         
-        // Update button states
         const horizontalBtn = document.getElementById('horizontal-split');
         const verticalBtn = document.getElementById('vertical-split');
         
+        // Update button states
         [horizontalBtn, verticalBtn].forEach(btn => {
             if (btn) {
                 btn.classList.remove('bg-white', 'dark:bg-gray-800', 'text-gray-900', 'dark:text-white', 'shadow-sm');
@@ -706,10 +834,10 @@ class ComponentViewer {
             activeBtn.classList.add('bg-white', 'dark:bg-gray-800', 'text-gray-900', 'dark:text-white', 'shadow-sm');
             activeBtn.classList.remove('text-gray-600', 'dark:text-gray-300');
         }
-
+        
         this.applySplitOrientation();
     }
-
+    
     applySplitOrientation() {
         const horizontalContainer = document.getElementById('horizontal-split-container');
         const verticalContainer = document.getElementById('vertical-split-container');
@@ -737,23 +865,11 @@ class ComponentViewer {
             return;
         }
         
-        // Dispose of existing editors first
-        if (this.splitEditor) {
-            this.splitEditor.dispose();
-            this.splitEditor = null;
-        }
-        
-        if (this.splitEditorVertical) {
-            this.splitEditorVertical.dispose();
-            this.splitEditorVertical = null;
-        }
-        
         if (this.splitOrientation === 'horizontal') {
             // Create horizontal split editor
-            const editorContainer = document.getElementById('split-code-editor');
-            if (editorContainer) {
+            if (!this.splitEditor && document.getElementById('split-code-editor')) {
                 try {
-                    this.splitEditor = monaco.editor.create(editorContainer, {
+                    this.splitEditor = monaco.editor.create(document.getElementById('split-code-editor'), {
                         value: this.currentComponent?.html || '',
                         language: 'html',
                         theme: this.editorTheme,
@@ -773,10 +889,9 @@ class ComponentViewer {
             }
         } else {
             // Create vertical split editor
-            const editorContainer = document.getElementById('split-code-editor-vertical');
-            if (editorContainer) {
+            if (!this.splitEditorVertical && document.getElementById('split-code-editor-vertical')) {
                 try {
-                    this.splitEditorVertical = monaco.editor.create(editorContainer, {
+                    this.splitEditorVertical = monaco.editor.create(document.getElementById('split-code-editor-vertical'), {
                         value: this.currentComponent?.html || '',
                         language: 'html',
                         theme: this.editorTheme,
@@ -850,8 +965,8 @@ class ComponentViewer {
             const codeSection = document.getElementById('code-section');
             
             if (previewSection && codeSection) {
-                previewSection.style.flex = `0 0 ${newTopHeight}px`;
-                codeSection.style.flex = `1 1 auto`;
+                previewSection.style.flex = `1 1 ${percentage}%`;
+                codeSection.style.flex = `1 1 ${100 - percentage}%`;
                 this.previewSectionSize = percentage.toString();
                 localStorage.setItem('previewSectionSize', this.previewSectionSize);
             }
@@ -924,15 +1039,95 @@ class ComponentViewer {
         });
     }
     
-    // Component management methods
-    initComponentActions() {
-        const saveBtn = document.getElementById('save-component');
-        const saveAsBtn = document.getElementById('save-as-component');
+    updateLivePreview() {
+        if (!this.currentComponent) return;
         
+        let code = '';
+        if (this.splitOrientation === 'horizontal' && this.splitEditor) {
+            code = this.splitEditor.getValue();
+        } else if (this.splitOrientation === 'vertical' && this.splitEditorVertical) {
+            code = this.splitEditorVertical.getValue();
+        }
+        
+        if (!code) return;
+        
+        // Update the appropriate iframe
+        const iframe = this.splitOrientation === 'horizontal'
+            ? document.getElementById('split-component-frame')
+            : document.getElementById('split-component-frame-vertical');
+            
+        if (iframe) {
+            // Store scroll position
+            this.scrollPosition = iframe.contentWindow?.scrollY || 0;
+            
+            // Create updated document
+            const tempDoc = `
+                <!DOCTYPE html>
+                <html lang="en" class="${this.currentTheme === 'dark' ? 'dark' : ''}">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Component Preview</title>
+                    <script src="https://cdn.tailwindcss.com"></script>
+                    <script>
+                        tailwind.config = {
+                            darkMode: 'class',
+                            theme: {
+                                extend: {
+                                    fontFamily: {
+                                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // Restore scroll position after load
+                        window.addEventListener('load', function() {
+                            if (${this.scrollPosition} > 0) {
+                                window.scrollTo(0, ${this.scrollPosition});
+                            }
+                        });
+                    </script>
+                    <style>
+                        body {
+                            font-family: 'Inter', system-ui, sans-serif;
+                            opacity: 0;
+                            transition: opacity 0.1s ease-in;
+                        }
+                        body.loaded {
+                            opacity: 1;
+                        }
+                    </style>
+                </head>
+                <body class="bg-white dark:bg-gray-900 min-h-screen">
+                    ${code}
+                    <script>
+                        document.body.classList.add('loaded');
+                        if (${this.scrollPosition} > 0) {
+                            window.scrollTo(0, ${this.scrollPosition});
+                        }
+                    </script>
+                </body>
+                </html>
+            `;
+            
+            // Debounced update
+            clearTimeout(this.updateTimeout);
+            this.updateTimeout = setTimeout(() => {
+                iframe.srcdoc = tempDoc;
+            }, 300);
+        }
+    }
+    
+    initComponentActions() {
+        // Save component button
+        const saveBtn = document.getElementById('save-component');
         if (saveBtn) {
             saveBtn.addEventListener('click', () => this.saveComponent());
         }
         
+        // Save as new component button
+        const saveAsBtn = document.getElementById('save-as-component');
         if (saveAsBtn) {
             saveAsBtn.addEventListener('click', () => this.saveAsNewComponent());
         }
@@ -955,80 +1150,112 @@ class ComponentViewer {
             saveForm.addEventListener('submit', (e) => this.handleSaveSubmit(e));
         }
         
-        // Copy button
-        const copyBtn = document.getElementById('copy-code');
-        if (copyBtn) {
-            copyBtn.addEventListener('click', () => this.copyCode());
+        // Category change handler
+        const categorySelect = document.getElementById('component-category');
+        if (categorySelect) {
+            categorySelect.addEventListener('change', () => this.updateSubcategoryOptions());
         }
     }
     
-    async saveComponent() {
+    saveComponent() {
         if (!this.currentComponent) {
             this.showToast('No component selected', 'error');
             return;
         }
         
-        let code = '';
-        if (this.currentView === 'code' && this.editor) {
-            code = this.editor.getValue();
-        } else if (this.currentView === 'split') {
-            if (this.splitOrientation === 'horizontal' && this.splitEditor) {
-                code = this.splitEditor.getValue();
-            } else if (this.splitOrientation === 'vertical' && this.splitEditorVertical) {
-                code = this.splitEditorVertical.getValue();
-            }
-        } else {
-            code = this.currentComponent.html;
+        let code = this.getCurrentCode();
+        if (!code) {
+            this.showToast('No code to save', 'error');
+            return;
         }
         
-        const data = {
-            action: 'save',
-            category: this.currentComponent.category,
-            subcategory: this.currentComponent.subcategory,
-            component: this.currentComponent.component,
-            html: code
-        };
-        
-        try {
-            const response = await fetch('api/save-component.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-            
-            const result = await response.json();
-            if (result.success) {
-                this.showToast('Component saved successfully!', 'success');
-                this.isComponentModified = false;
-            } else {
-                this.showToast(result.message || 'Failed to save component', 'error');
-            }
-        } catch (error) {
-            console.error('Save error:', error);
-            this.showToast('Error saving component', 'error');
-        }
+        // Save directly to current component
+        this.performSave(
+            this.currentComponent.metadata.category,
+            this.currentComponent.metadata.subcategory,
+            this.currentComponent.slug,
+            code,
+            this.currentComponent.metadata
+        );
     }
     
     saveAsNewComponent() {
-        const modal = document.getElementById('save-modal');
-        if (modal) {
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            
-            // Pre-fill form with current component data
-            if (this.currentComponent) {
-                document.getElementById('save-folder').value = this.currentComponent.category + '/' + this.currentComponent.subcategory;
-                document.getElementById('save-title').value = this.currentComponent.title + ' Copy';
-                document.getElementById('save-description').value = this.currentComponent.description || '';
+        const code = this.getCurrentCode();
+        if (!code) {
+            this.showToast('No code to save', 'error');
+            return;
+        }
+        
+        // Open save modal
+        this.openSaveModal(false);
+    }
+    
+    getCurrentCode() {
+        if (this.currentView === 'code' && this.editor) {
+            return this.editor.getValue();
+        } else if (this.currentView === 'split') {
+            if (this.splitOrientation === 'horizontal' && this.splitEditor) {
+                return this.splitEditor.getValue();
+            } else if (this.splitOrientation === 'vertical' && this.splitEditorVertical) {
+                return this.splitEditorVertical.getValue();
             }
         }
+        return '';
+    }
+    
+    openSaveModal(isUpdate = false) {
+        const modal = document.getElementById('save-modal');
+        const title = document.getElementById('save-modal-title');
+        
+        if (title) {
+            title.textContent = isUpdate ? 'Update Component' : 'Save as New Component';
+        }
+        
+        // Populate form with current component data if available
+        if (this.currentComponent) {
+            document.getElementById('component-name').value = isUpdate ? this.currentComponent.metadata.name : '';
+            document.getElementById('component-description').value = isUpdate ? this.currentComponent.metadata.description : '';
+            document.getElementById('component-category').value = isUpdate ? this.currentComponent.metadata.category : 'marketing';
+            document.getElementById('component-tags').value = isUpdate ? this.currentComponent.metadata.tags?.join(', ') : '';
+            document.getElementById('component-responsive').checked = isUpdate ? this.currentComponent.metadata.responsive : true;
+            document.getElementById('component-dark-mode').checked = isUpdate ? this.currentComponent.metadata.darkMode : true;
+        }
+        
+        this.updateSubcategoryOptions();
+        modal?.classList.remove('hidden');
     }
     
     closeSaveModal() {
         const modal = document.getElementById('save-modal');
-        if (modal) {
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
+        modal?.classList.add('hidden');
+    }
+    
+    updateSubcategoryOptions() {
+        const categorySelect = document.getElementById('component-category');
+        const subcategorySelect = document.getElementById('component-subcategory');
+        
+        if (!categorySelect || !subcategorySelect) return;
+        
+        const subcategories = {
+            'marketing': ['heroes', 'features', 'cta', 'testimonials', 'pricing'],
+            'application-ui': ['forms', 'navigation', 'data-display', 'feedback', 'overlays'],
+            'ecommerce': ['product-display', 'shopping-cart', 'checkout', 'reviews']
+        };
+        
+        const category = categorySelect.value;
+        const options = subcategories[category] || [];
+        
+        subcategorySelect.innerHTML = '';
+        options.forEach(option => {
+            const optionElement = document.createElement('option');
+            optionElement.value = option;
+            optionElement.textContent = option.charAt(0).toUpperCase() + option.slice(1).replace('-', ' ');
+            subcategorySelect.appendChild(optionElement);
+        });
+        
+        // Set current subcategory if updating
+        if (this.currentComponent) {
+            subcategorySelect.value = this.currentComponent.metadata.subcategory;
         }
     }
     
@@ -1036,87 +1263,142 @@ class ComponentViewer {
         e.preventDefault();
         
         const formData = new FormData(e.target);
-        const folder = formData.get('folder');
-        const title = formData.get('title');
-        const description = formData.get('description');
+        const code = this.getCurrentCode();
         
-        if (!folder || !title) {
-            this.showToast('Please fill in all required fields', 'error');
+        if (!code) {
+            this.showToast('No code to save', 'error');
             return;
         }
         
-        const [category, subcategory] = folder.split('/');
-        const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
-        
-        let code = '';
-        if (this.currentView === 'code' && this.editor) {
-            code = this.editor.getValue();
-        } else if (this.currentView === 'split') {
-            if (this.splitOrientation === 'horizontal' && this.splitEditor) {
-                code = this.splitEditor.getValue();
-            } else if (this.splitOrientation === 'vertical' && this.splitEditorVertical) {
-                code = this.splitEditorVertical.getValue();
-            }
-        } else {
-            code = this.currentComponent?.html || '';
-        }
-        
         const metadata = {
-            title,
-            description,
-            category,
-            subcategory
+            name: formData.get('name'),
+            description: formData.get('description'),
+            category: formData.get('category'),
+            subcategory: formData.get('subcategory'),
+            tags: formData.get('tags').split(',').map(tag => tag.trim()).filter(tag => tag),
+            responsive: formData.has('responsive'),
+            darkMode: formData.has('darkMode'),
+            dependencies: ['tailwindcss'],
+            version: '1.0.0',
+            author: 'TailwindUI Blocks'
         };
         
-        try {
-            const result = await this.performSave(category, subcategory, slug, code, metadata);
-            if (result.success) {
-                this.showToast('Component saved successfully!', 'success');
-                this.closeSaveModal();
-                this.isComponentModified = false;
-                
-                // Optionally redirect to the new component
-                window.location.href = `?category=${category}&subcategory=${subcategory}&component=${slug}`;
-            } else {
-                this.showToast(result.message || 'Failed to save component', 'error');
-            }
-        } catch (error) {
-            console.error('Save error:', error);
-            this.showToast('Error saving component', 'error');
-        }
+        // Generate slug from name
+        const slug = metadata.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        
+        await this.performSave(metadata.category, metadata.subcategory, slug, code, metadata);
+        this.closeSaveModal();
     }
     
     async performSave(category, subcategory, slug, code, metadata) {
-        const data = {
-            action: 'save_as',
-            category,
-            subcategory,
-            component: slug,
-            html: code,
-            metadata
-        };
+        try {
+            const response = await fetch('api/save-component.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    category,
+                    subcategory,
+                    slug,
+                    code,
+                    metadata
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                this.showToast('Component saved successfully!', 'success');
+                this.isComponentModified = false;
+                
+                // Reload sidebar to show new component
+                location.reload();
+            } else {
+                this.showToast(result.error || 'Failed to save component', 'error');
+            }
+        } catch (error) {
+            console.error('Save error:', error);
+            this.showToast('Failed to save component', 'error');
+        }
+    }
+    
+    updateBreakpointFromPreviewSize(previewWidth) {
+        // Determine breakpoint based on actual preview width
+        let newBreakpoint = 'desktop';
+        let newWidth = Math.round(previewWidth);
         
-        const response = await fetch('api/save-component.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
+        if (previewWidth <= 480) {
+            newBreakpoint = 'mobile';
+            newWidth = Math.min(newWidth, 480);
+        } else if (previewWidth <= 768) {
+            newBreakpoint = 'tablet';
+            newWidth = Math.min(newWidth, 768);
+        } else {
+            newBreakpoint = 'desktop';
+            newWidth = Math.max(newWidth, 768);
+        }
+        
+        // Update current state
+        this.currentBreakpoint = newBreakpoint;
+        this.currentWidth = newWidth;
+        
+        // Save to localStorage
+        localStorage.setItem('breakpoint', this.currentBreakpoint);
+        localStorage.setItem('width', this.currentWidth.toString());
+        
+        // Update UI elements
+        this.updateBreakpointButtons();
+        this.updateBreakpointDisplay();
+        this.updateWidthSlider();
+    }
+    
+    updateBreakpointButtons() {
+        const buttons = document.querySelectorAll('.breakpoint-btn');
+        buttons.forEach(btn => {
+            btn.classList.remove('bg-white', 'dark:bg-gray-800', 'text-gray-900', 'dark:text-white', 'shadow-sm');
+            btn.classList.add('text-gray-600', 'dark:text-gray-300');
+            
+            if (btn.dataset.breakpoint === this.currentBreakpoint) {
+                btn.classList.add('bg-white', 'dark:bg-gray-800', 'text-gray-900', 'dark:text-white', 'shadow-sm');
+                btn.classList.remove('text-gray-600', 'dark:text-gray-300');
+            }
         });
+    }
+    
+    updateWidthSlider() {
+        const widthSlider = document.getElementById('width-slider');
+        if (widthSlider) {
+            widthSlider.value = this.currentWidth;
+        }
         
-        return await response.json();
+        const widthDisplay = document.getElementById('width-display');
+        if (widthDisplay) {
+            widthDisplay.textContent = `${this.currentWidth}px`;
+        }
     }
     
     updateURL(params) {
         const url = new URL(window.location);
         Object.keys(params).forEach(key => {
-            if (params[key]) {
-                url.searchParams.set(key, params[key]);
-            }
+            url.searchParams.set(key, params[key]);
         });
         window.history.replaceState({}, '', url);
     }
 }
 
-// Initialize the application
+// Initialize the application when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    new ComponentViewer();
+    window.tailwindUIViewer = new TailwindUIViewer();
+});
+
+// Handle responsive sidebar on window resize
+window.addEventListener('resize', () => {
+    if (window.tailwindUIViewer && window.innerWidth >= 1024) {
+        const sidebar = document.getElementById('sidebar');
+        if (sidebar) {
+            sidebar.style.transform = 'translateX(0)';
+            window.tailwindUIViewer.sidebarOpen = true;
+        }
+    }
 });

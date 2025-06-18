@@ -1,0 +1,16 @@
+{
+    "name": "Hero mod",
+    "description": "Build the future together",
+    "category": "marketing",
+    "subcategory": "heroes",
+    "tags": [],
+    "responsive": true,
+    "darkMode": true,
+    "dependencies": [
+        "tailwindcss"
+    ],
+    "version": "1.0.0",
+    "author": "TailwindUI Blocks",
+    "created": "2025-06-18 14:56:17",
+    "updated": "2025-06-18 14:56:17"
+}

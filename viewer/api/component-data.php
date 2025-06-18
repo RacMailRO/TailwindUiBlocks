@@ -27,10 +27,7 @@ try {
     }
     
     // Return component data
-    echo json_encode([
-        'success' => true,
-        'component' => $componentData
-    ]);
+    echo json_encode($componentData);
     
 } catch (Exception $e) {
     http_response_code(500);
