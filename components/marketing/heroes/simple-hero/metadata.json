@@ -1,0 +1,21 @@
+{
+  "name": "Simple Hero",
+  "description": "A clean, minimal hero section with headline, description, and call-to-action buttons",
+  "category": "marketing",
+  "subcategory": "heroes",
+  "tags": ["hero", "landing", "cta", "simple", "clean"],
+  "responsive": true,
+  "darkMode": true,
+  "dependencies": ["tailwindcss"],
+  "version": "1.0.0",
+  "author": "TailwindUI Blocks",
+  "created": "2025-06-18",
+  "updated": "2025-06-18",
+  "preview": "simple-hero-preview.jpg",
+  "features": [
+    "Responsive design",
+    "Dark mode support",
+    "Accessible markup",
+    "Clean typography"
+  ]
+}

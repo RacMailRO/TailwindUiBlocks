@@ -1,0 +1,21 @@
+{
+  "name": "Product Grid",
+  "description": "A responsive product grid with images, titles, prices, and rating displays",
+  "category": "ecommerce",
+  "subcategory": "product-display",
+  "tags": ["products", "grid", "ecommerce", "shopping", "catalog"],
+  "responsive": true,
+  "darkMode": true,
+  "dependencies": ["tailwindcss"],
+  "version": "1.0.0",
+  "author": "TailwindUI Blocks",
+  "created": "2025-06-18",
+  "updated": "2025-06-18",
+  "preview": "product-grid-preview.jpg",
+  "features": [
+    "Responsive grid layout",
+    "Product images with hover effects",
+    "Price and rating display",
+    "Add to cart functionality"
+  ]
+}

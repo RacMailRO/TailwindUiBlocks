@@ -1,0 +1,21 @@
+{
+  "name": "Carousel Testimonials",
+  "description": "An interactive testimonial carousel with navigation arrows and indicators",
+  "category": "marketing",
+  "subcategory": "testimonials",
+  "tags": ["testimonials", "carousel", "slider", "reviews", "interactive"],
+  "responsive": true,
+  "darkMode": true,
+  "dependencies": ["tailwindcss"],
+  "version": "1.0.0",
+  "author": "TailwindUI Blocks",
+  "created": "2025-06-18",
+  "updated": "2025-06-18",
+  "preview": "carousel-testimonials-preview.jpg",
+  "features": [
+    "Interactive carousel",
+    "Navigation arrows",
+    "Indicator dots",
+    "Auto-play functionality"
+  ]
+}

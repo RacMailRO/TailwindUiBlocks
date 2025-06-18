@@ -1,0 +1,21 @@
+{
+  "name": "Simple Pricing",
+  "description": "A clean pricing section with three pricing tiers and feature comparisons",
+  "category": "marketing",
+  "subcategory": "pricing",
+  "tags": ["pricing", "plans", "tiers", "subscription", "features"],
+  "responsive": true,
+  "darkMode": true,
+  "dependencies": ["tailwindcss"],
+  "version": "1.0.0",
+  "author": "TailwindUI Blocks",
+  "created": "2025-06-18",
+  "updated": "2025-06-18",
+  "preview": "simple-pricing-preview.jpg",
+  "features": [
+    "Three pricing tiers",
+    "Feature comparison",
+    "Popular plan highlighting",
+    "Call-to-action buttons"
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "name": "Stats Grid",
+  "description": "A responsive grid displaying key statistics with icons and trend indicators",
+  "category": "application-ui",
+  "subcategory": "data-display",
+  "tags": ["stats", "metrics", "dashboard", "grid", "analytics"],
+  "responsive": true,
+  "darkMode": true,
+  "dependencies": ["tailwindcss"],
+  "version": "1.0.0",
+  "author": "TailwindUI Blocks",
+  "created": "2025-06-18",
+  "updated": "2025-06-18",
+  "preview": "stats-grid-preview.jpg",
+  "features": [
+    "Responsive grid layout",
+    "Icon integration",
+    "Trend indicators",
+    "Clean typography"
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "name": "Simple CTA",
+  "description": "A clean call-to-action section with headline, description, and primary button",
+  "category": "marketing",
+  "subcategory": "cta",
+  "tags": ["cta", "call-to-action", "simple", "conversion", "button"],
+  "responsive": true,
+  "darkMode": true,
+  "dependencies": ["tailwindcss"],
+  "version": "1.0.0",
+  "author": "TailwindUI Blocks",
+  "created": "2025-06-18",
+  "updated": "2025-06-18",
+  "preview": "simple-cta-preview.jpg",
+  "features": [
+    "Clean, focused design",
+    "High conversion potential",
+    "Responsive layout",
+    "Dark mode support"
+  ]
+}

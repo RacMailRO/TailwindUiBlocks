@@ -1,0 +1,21 @@
+{
+  "name": "Contact Form",
+  "description": "A comprehensive contact form with validation styling and proper form structure",
+  "category": "application-ui",
+  "subcategory": "forms",
+  "tags": ["form", "contact", "input", "validation", "fields"],
+  "responsive": true,
+  "darkMode": true,
+  "dependencies": ["tailwindcss"],
+  "version": "1.0.0",
+  "author": "TailwindUI Blocks",
+  "created": "2025-06-18",
+  "updated": "2025-06-18",
+  "preview": "contact-form-preview.jpg",
+  "features": [
+    "Multiple input types",
+    "Validation styling",
+    "Accessible form structure",
+    "Responsive design"
+  ]
+}

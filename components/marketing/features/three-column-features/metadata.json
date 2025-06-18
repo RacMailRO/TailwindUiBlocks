@@ -1,0 +1,21 @@
+{
+  "name": "Three Column Features",
+  "description": "A feature section with three columns, each featuring an icon, title, and description",
+  "category": "marketing",
+  "subcategory": "features",
+  "tags": ["features", "grid", "icons", "three-column", "benefits"],
+  "responsive": true,
+  "darkMode": true,
+  "dependencies": ["tailwindcss"],
+  "version": "1.0.0",
+  "author": "TailwindUI Blocks",
+  "created": "2025-06-18",
+  "updated": "2025-06-18",
+  "preview": "three-column-features-preview.jpg",
+  "features": [
+    "Icon-based features",
+    "Three column layout",
+    "Responsive grid system",
+    "Perfect for highlighting benefits"
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "name": "Centered Hero",
+  "description": "A centered hero section with large typography and centered call-to-action buttons",
+  "category": "marketing",
+  "subcategory": "heroes",
+  "tags": ["hero", "centered", "typography", "minimal", "landing"],
+  "responsive": true,
+  "darkMode": true,
+  "dependencies": ["tailwindcss"],
+  "version": "1.0.0",
+  "author": "TailwindUI Blocks",
+  "created": "2025-06-18",
+  "updated": "2025-06-18",
+  "preview": "centered-hero-preview.jpg",
+  "features": [
+    "Centered layout design",
+    "Large typography",
+    "Minimal design",
+    "Perfect for landing pages"
+  ]
+}

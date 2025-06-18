@@ -1,0 +1,21 @@
+{
+  "name": "Hero with Image",
+  "description": "A hero section with split layout featuring content on one side and an image on the other",
+  "category": "marketing",
+  "subcategory": "heroes",
+  "tags": ["hero", "landing", "split", "image", "layout"],
+  "responsive": true,
+  "darkMode": true,
+  "dependencies": ["tailwindcss"],
+  "version": "1.0.0",
+  "author": "TailwindUI Blocks",
+  "created": "2025-06-18",
+  "updated": "2025-06-18",
+  "preview": "hero-with-image-preview.jpg",
+  "features": [
+    "Split layout design",
+    "Responsive image handling",
+    "Dark mode support",
+    "Mobile-first approach"
+  ]
+}

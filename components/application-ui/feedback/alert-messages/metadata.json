@@ -1,0 +1,21 @@
+{
+  "name": "Alert Messages",
+  "description": "Alert components for success, error, warning, and info messages with dismissible functionality",
+  "category": "application-ui",
+  "subcategory": "feedback",
+  "tags": ["alerts", "notifications", "feedback", "messages", "status"],
+  "responsive": true,
+  "darkMode": true,
+  "dependencies": ["tailwindcss"],
+  "version": "1.0.0",
+  "author": "TailwindUI Blocks",
+  "created": "2025-06-18",
+  "updated": "2025-06-18",
+  "preview": "alert-messages-preview.jpg",
+  "features": [
+    "Multiple alert types",
+    "Dismissible functionality",
+    "Icon integration",
+    "Accessible design"
+  ]
+}
