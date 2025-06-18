@@ -45,7 +45,7 @@
         <div id="sidebar" class="w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col sidebar-transition">
             <!-- Header -->
             <div class="p-6 border-b border-gray-200 dark:border-gray-700">
-                <h1 class="text-xl font-bold text-gray-900 dark:text-white">Tailwind UI Blocks</h1>
+                <h1 class="text-xl font-bold text-gray-900 dark:text-white"><a href="/viewer/">Tailwind UI Blocks</a></h1>
                 <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Component Library</p>
             </div>
 
