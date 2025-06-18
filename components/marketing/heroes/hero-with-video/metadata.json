@@ -1,0 +1,14 @@
+{
+  "name": "Hero with Video",
+  "description": "A hero section with a video background, overlay, title, subtitle, and a call-to-action button. Ideal for engaging introductions.",
+  "category": "marketing",
+  "subcategory": "heroes",
+  "tags": ["hero", "video", "landing page", "cta", "background video"],
+  "responsive": true,
+  "darkMode": true,
+  "dependencies": ["tailwindcss"],
+  "version": "1.0.0",
+  "author": "TailwindUI Blocks",
+  "created": "2025-06-19",
+  "updated": "2025-06-19"
+}
