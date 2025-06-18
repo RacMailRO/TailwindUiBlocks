@@ -1,6 +1,6 @@
 export function initTheme(app) {
     const themeToggle = document.getElementById('theme-toggle');
-    if (themeToggle) {
+    if (themeToggle) { // This check is good!
         themeToggle.addEventListener('click', () => toggleTheme(app));
     }
     
@@ -16,20 +16,24 @@ function toggleTheme(app) {
     app.currentTheme = isDark ? 'dark' : 'light';
     app.safeLocalStorageSetItem('theme', app.currentTheme);
     app.updateComponentPreview();
+    // After toggling, we need to update the icon state again
+    updateThemeToggleIcon(app); 
 }
 
 export function updateThemeToggleIcon(app) {
     const themeToggle = document.getElementById('theme-toggle');
-    if (themeToggle) {
-        const sunIcon = themeToggle.querySelector('.sun-icon');
-        const moonIcon = themeToggle.querySelector('.moon-icon');
-        
-        if (app.currentTheme === 'dark') {
-            sunIcon.style.display = 'none';
-            moonIcon.style.display = 'block';
-        } else {
-            sunIcon.style.display = 'block';
-            moonIcon.style.display = 'none';
-        }
+    // Guard clause: If the main toggle button doesn't exist, do nothing.
+    if (!themeToggle) return; 
+
+    const sunIcon = themeToggle.querySelector('.sun-icon');
+    const moonIcon = themeToggle.querySelector('.moon-icon');
+    
+    // Now, check for each icon before changing its style.
+    if (app.currentTheme === 'dark') {
+        if (sunIcon) sunIcon.style.display = 'none';
+        if (moonIcon) moonIcon.style.display = 'block';
+    } else {
+        if (sunIcon) sunIcon.style.display = 'block';
+        if (moonIcon) moonIcon.style.display = 'none';
     }
 }

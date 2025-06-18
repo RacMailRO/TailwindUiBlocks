@@ -86,7 +86,14 @@ export function updateBreakpointDisplay(app) {
     const wDisplay = document.getElementById('current-width');
     const sliderDisplay = document.getElementById('width-display');
 
-    if (bpDisplay) bpDisplay.textContent = app.currentBreakpoint.charAt(0).toUpperCase() + app.currentBreakpoint.slice(1);
-    if (wDisplay) wDisplay.textContent = `${app.currentWidth}px`;
-    if (sliderDisplay) sliderDisplay.textContent = `${app.currentWidth}px`;
+    // Add checks for each element before setting textContent
+    if (bpDisplay) {
+        bpDisplay.textContent = app.currentBreakpoint.charAt(0).toUpperCase() + app.currentBreakpoint.slice(1);
+    }
+    if (wDisplay) {
+        wDisplay.textContent = `${app.currentWidth}px`;
+    }
+    if (sliderDisplay) {
+        sliderDisplay.textContent = `${app.currentWidth}px`;
+    }
 }

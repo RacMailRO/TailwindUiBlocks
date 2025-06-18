@@ -1,4 +1,5 @@
 export function initViewControls(app) {
+    // Add checks to prevent errors if a tab is missing from the HTML
     document.getElementById('preview-tab')?.addEventListener('click', () => app.switchView('preview'));
     document.getElementById('code-tab')?.addEventListener('click', () => app.switchView('code'));
     document.getElementById('split-tab')?.addEventListener('click', () => app.switchView('split'));
@@ -22,11 +23,13 @@ export function switchView(app, view) {
         examples: document.getElementById('examples-tab')
     };
 
-    // Hide all views and reset all tabs
-    Object.values(views).forEach(v => v?.classList.add('hidden'));
+    // Hide all views and reset all tabs safely
+    Object.values(views).forEach(v => v?.classList.add('hidden')); // The ?. is "optional chaining"
     Object.values(tabs).forEach(tab => {
-        tab?.classList.remove('bg-white', 'dark:bg-gray-800', 'text-gray-900', 'dark:text-white', 'shadow-sm');
-        tab?.classList.add('text-gray-600', 'dark:text-gray-300');
+        if (tab) { // A standard if-check also works well
+            tab.classList.remove('bg-white', 'dark:bg-gray-800', 'text-gray-900', 'dark:text-white', 'shadow-sm');
+            tab.classList.add('text-gray-600', 'dark:text-gray-300');
+        }
     });
 
     // Show/hide relevant controls
@@ -34,9 +37,11 @@ export function switchView(app, view) {
     document.getElementById('editor-theme-toggle')?.classList.toggle('hidden', !showEditorTheme);
     document.getElementById('split-controls')?.classList.toggle('hidden', view !== 'split');
 
-    // Activate selected view and tab
+    // Activate selected view and tab safely
     if (views[view]) {
         views[view].classList.remove('hidden');
+    }
+    if (tabs[view]) {
         tabs[view].classList.add('bg-white', 'dark:bg-gray-800', 'text-gray-900', 'dark:text-white', 'shadow-sm');
         tabs[view].classList.remove('text-gray-600', 'dark:text-gray-300');
     }
@@ -44,11 +49,12 @@ export function switchView(app, view) {
     // Post-activation actions
     if (view === 'code') app.loadCodeInEditor();
     if (view === 'split') {
-        app.loadCodeInSplitEditor();
         app.applySplitOrientation();
+        app.loadCodeInSplitEditor();
     }
     if (view === 'examples') renderComponentExamples(app);
 }
+
 
 function renderComponentExamples(app) {
     const examplesContentArea = document.getElementById('examples-content-area');

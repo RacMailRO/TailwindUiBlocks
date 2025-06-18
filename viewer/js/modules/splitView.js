@@ -1,4 +1,3 @@
-
 export function initSplitView(app) {
     document.getElementById('horizontal-split')?.addEventListener('click', () => setSplitOrientation(app, 'horizontal'));
     document.getElementById('vertical-split')?.addEventListener('click', () => setSplitOrientation(app, 'vertical'));
@@ -11,15 +10,20 @@ function setSplitOrientation(app, orientation) {
     
     const horizontalBtn = document.getElementById('horizontal-split');
     const verticalBtn = document.getElementById('vertical-split');
-    const isActive = (btn) => btn.id.startsWith(orientation);
-
-    [horizontalBtn, verticalBtn].forEach(btn => {
-        if (btn) {
-            btn.classList.toggle('bg-white', isActive(btn));
-            btn.classList.toggle('dark:bg-gray-800', isActive(btn));
-            btn.classList.toggle('text-gray-900', isActive(btn));
-        }
-    });
+    
+    // Update button states
+    if (horizontalBtn) {
+        const isActive = orientation === 'horizontal';
+        horizontalBtn.classList.toggle('bg-white', isActive);
+        horizontalBtn.classList.toggle('dark:bg-gray-800', isActive);
+        horizontalBtn.classList.toggle('text-gray-900', isActive);
+    }
+    if (verticalBtn) {
+        const isActive = orientation === 'vertical';
+        verticalBtn.classList.toggle('bg-white', isActive);
+        verticalBtn.classList.toggle('dark:bg-gray-800', isActive);
+        verticalBtn.classList.toggle('text-gray-900', isActive);
+    }
 
     applySplitOrientation(app);
 }
@@ -29,44 +33,59 @@ export function applySplitOrientation(app) {
     const vContainer = document.getElementById('vertical-split-container');
     
     const isHorizontal = app.splitOrientation === 'horizontal';
+
+    // Toggle visibility of the main containers
     hContainer?.classList.toggle('hidden', !isHorizontal);
     vContainer?.classList.toggle('hidden', isHorizontal);
 
-    createSplitEditors(app);
+    // Now that the correct container is visible, create the editor if it doesn't exist
+    createSplitEditorForCurrentView(app);
+    // And ensure it has the latest code
     loadCodeInSplitEditor(app);
 }
 
-function createSplitEditors(app) {
+function createSplitEditorForCurrentView(app) {
     if (typeof monaco === 'undefined') return;
     
-    const setupEditor = (containerId, editorProp) => {
-        const container = document.getElementById(containerId);
-        if (container && !app[editorProp]) {
-            app[editorProp] = monaco.editor.create(container, {
-                value: app.currentComponent?.html || '',
-                language: 'html',
-                theme: app.editorTheme,
-                automaticLayout: true,
-                minimap: { enabled: false },
-                wordWrap: 'on'
-            });
-            app[editorProp].onDidChangeModelContent(() => {
-                clearTimeout(app.updateTimeout);
-                app.updateTimeout = setTimeout(() => updateLivePreview(app), 300);
-            });
-        }
-    };
+    const isHorizontal = app.splitOrientation === 'horizontal';
+    const editorProp = isHorizontal ? 'splitEditor' : 'splitEditorVertical';
+    const containerId = isHorizontal ? 'split-code-editor' : 'split-code-editor-vertical';
+    
+    // Only proceed if the editor for this view has NOT been created yet
+    if (app[editorProp]) {
+        // If it exists, it might need a layout refresh, especially if the window was resized
+        app[editorProp].layout();
+        return;
+    }
 
-    if (app.splitOrientation === 'horizontal') {
-        setupEditor('split-code-editor', 'splitEditor');
-    } else {
-        setupEditor('split-code-editor-vertical', 'splitEditorVertical');
+    const container = document.getElementById(containerId);
+
+    // Only create if the container exists and is visible
+    if (container && container.offsetParent !== null) {
+        app[editorProp] = monaco.editor.create(container, {
+            value: app.currentComponent?.html || '',
+            language: 'html',
+            theme: app.editorTheme,
+            automaticLayout: true, // This is key for handling resizer changes
+            minimap: { enabled: false },
+            wordWrap: 'on'
+        });
+
+        // Add the live-preview listener
+        app[editorProp].onDidChangeModelContent(() => {
+            clearTimeout(app.updateTimeout);
+            app.updateTimeout = setTimeout(() => updateLivePreview(app), 300);
+        });
     }
 }
 
 export function loadCodeInSplitEditor(app) {
     if (!app.currentComponent) return;
+    
+    // Find the currently active editor
     const editor = app.splitOrientation === 'horizontal' ? app.splitEditor : app.splitEditorVertical;
+    
+    // If the editor exists, set its value
     editor?.setValue(app.currentComponent.html || '');
 }
 
@@ -88,122 +107,120 @@ export function updateLivePreview(app) {
     }
 }
 
-function initResizers(app) {
-    initHorizontalResizer(app, document.getElementById('horizontal-resizer'));
-    initVerticalResizer(app, document.getElementById('vertical-resizer'));
-}
+// --- RESIZER LOGIC ---
 
- function initHorizontalResizer(resizer) {
-        if(!resizer) return;
-        let isResizing = false;
-        let startY = 0;
-        let startTopHeight = 0;
-        
-        resizer.addEventListener('mousedown', (e) => {
-            isResizing = true;
-            document.body.style.cursor = 'row-resize';
-            document.body.style.userSelect = 'none';
-            
-            const container = document.getElementById('horizontal-split-container');
-            if (!container) return;
-            
-            startY = e.clientY;
-            const previewSection = document.getElementById('preview-section');
-            
-            if (previewSection) {
-                const previewRect = previewSection.getBoundingClientRect();
-                startTopHeight = previewRect.height;
-            }
-            
-            e.preventDefault();
-        });
-        
-        document.addEventListener('mousemove', (e) => {
-            if (!isResizing) return;
-            
-            const container = document.getElementById('horizontal-split-container');
-            if (!container) return;
-            
-            const deltaY = e.clientY - startY;
-            const containerRect = container.getBoundingClientRect();
-            const newTopHeight = Math.max(containerRect.height * 0.2, Math.min(containerRect.height * 0.8, startTopHeight + deltaY));
-            const percentage = (newTopHeight / containerRect.height) * 100;
-            
-            const previewSection = document.getElementById('preview-section');
-            const codeSection = document.getElementById('code-section');
-            
-            if (previewSection && codeSection) {
-                previewSection.style.flex = `1 1 ${percentage}%`;
-                codeSection.style.flex = `1 1 ${100 - percentage}%`;
-                this.previewSectionSize = percentage.toString();
-                this.safeLocalStorageSetItem('previewSectionSize', this.previewSectionSize);
-            }
-        });
-        
-        document.addEventListener('mouseup', () => {
-            if (isResizing) {
-                isResizing = false;
-                document.body.style.cursor = '';
-                document.body.style.userSelect = '';
-            }
-        });
+function initResizers(app) {
+    const horizontalResizer = document.getElementById('horizontal-resizer');
+    if (horizontalResizer) {
+        initHorizontalResizer(app, horizontalResizer);
     }
     
-   function initVerticalResizer(resizer) {
-        if (!resizer) return;
-        let isResizing = false;
-        let startX = 0;
-        let startLeftWidth = 0;
-        
-        resizer.addEventListener('mousedown', (e) => {
-            isResizing = true;
-            document.body.style.cursor = 'col-resize';
-            document.body.style.userSelect = 'none';
-            
-            const container = document.getElementById('vertical-split-container');
-            if (!container) return;
-            
-            startX = e.clientX;
-            const previewSection = document.getElementById('preview-section-vertical');
-            
-            if (previewSection) {
-                const previewRect = previewSection.getBoundingClientRect();
-                startLeftWidth = previewRect.width;
-            }
-            
-            e.preventDefault();
-        });
-        
-        document.addEventListener('mousemove', (e) => {
-            if (!isResizing) return;
-            
-            const container = document.getElementById('vertical-split-container');
-            if (!container) return;
-            
-            const deltaX = e.clientX - startX;
-            const containerRect = container.getBoundingClientRect();
-            const newLeftWidth = Math.max(containerRect.width * 0.2, Math.min(containerRect.width * 0.8, startLeftWidth + deltaX));
-            const percentage = (newLeftWidth / containerRect.width) * 100;
-            
-            const previewSection = document.getElementById('preview-section-vertical');
-            const codeSection = document.getElementById('code-section-vertical');
-            
-            if (previewSection && codeSection) {
-                previewSection.style.flex = `0 0 ${newLeftWidth}px`;
-                codeSection.style.flex = `1 1 auto`;
-                this.previewSectionSize = percentage.toString();
-                this.safeLocalStorageSetItem('previewSectionSize', this.previewSectionSize);
-                
-                // Update breakpoint and width display based on actual preview width
-                this.updateBreakpointFromPreviewSize(newLeftWidth);
-            }
-        });
-        
-        document.addEventListener('mouseup', () => {
-            if (isResizing) {
-                isResizing = false;
-                document.body.style.cursor = '';
-                document.body.style.userSelect = '';
-            }
-        });
+    const verticalResizer = document.getElementById('vertical-resizer');
+    if (verticalResizer) {
+        initVerticalResizer(app, verticalResizer);
     }
+}
+function initHorizontalResizer(app, resizer) {
+    let isResizing = false;
+    let startY = 0;
+    let startTopHeight = 0;
+
+    resizer.addEventListener('mousedown', (e) => {
+        isResizing = true;
+        document.body.style.cursor = 'row-resize';
+        document.body.style.userSelect = 'none';
+        
+        const previewSection = document.getElementById('preview-section');
+        if (previewSection) {
+            startY = e.clientY;
+            startTopHeight = previewSection.getBoundingClientRect().height;
+        }
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (!isResizing) return;
+        
+        const container = document.getElementById('horizontal-split-container');
+        if (!container) return;
+
+        const deltaY = e.clientY - startY;
+        const containerRect = container.getBoundingClientRect();
+        const newTopHeight = Math.max(50, Math.min(containerRect.height - 50, startTopHeight + deltaY));
+        const percentage = (newTopHeight / containerRect.height) * 100;
+        
+        const previewSection = document.getElementById('preview-section');
+        const codeSection = document.getElementById('code-section');
+        
+        if (previewSection && codeSection) {
+            previewSection.style.flex = `1 1 ${percentage}%`;
+            codeSection.style.flex = `1 1 ${100 - percentage}%`;
+            app.previewSectionSize = percentage.toString();
+            app.safeLocalStorageSetItem('previewSectionSize', app.previewSectionSize);
+        }
+    });
+
+    document.addEventListener('mouseup', () => {
+        if (isResizing) {
+            isResizing = false;
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+        }
+    });
+}
+
+function initVerticalResizer(app, resizer) {
+    let isResizing = false;
+    let startX = 0;
+    let startLeftWidth = 0;
+
+    resizer.addEventListener('mousedown', (e) => {
+        isResizing = true;
+        document.body.style.cursor = 'col-resize';
+        document.body.style.userSelect = 'none';
+        
+        const previewSection = document.getElementById('preview-section-vertical');
+        if (previewSection) {
+            startX = e.clientX;
+            startLeftWidth = previewSection.getBoundingClientRect().width;
+        }
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', (e) => {
+    if (!isResizing) return;
+    
+    const container = document.getElementById('vertical-split-container');
+    if (!container) return;
+    
+    const deltaX = e.clientX - startX;
+    const containerRect = container.getBoundingClientRect();
+    const newLeftWidth = Math.max(100, Math.min(containerRect.width - 100, startLeftWidth + deltaX));
+    
+    const previewSection = document.getElementById('preview-section-vertical');
+    const codeSection = document.getElementById('code-section-vertical');
+    
+    if (previewSection && codeSection) {
+        // This sets the width of the preview pane.
+        previewSection.style.flex = `0 0 ${newLeftWidth}px`;
+
+        // We don't need to set the flex for the code section.
+        // Its 'flex: 1' from the 'flex-1' class and 'min-w-0'
+        // should be enough to make it fill the rest of the space.
+        // Let's remove the JS that sets its flex style.
+        
+        // Save the percentage for persistence
+        const percentage = (newLeftWidth / containerRect.width) * 100;
+        app.previewSectionSize = percentage.toString();
+        app.safeLocalStorageSetItem('previewSectionSize', app.previewSectionSize);
+    }
+});
+
+    document.addEventListener('mouseup', () => {
+        if (isResizing) {
+            isResizing = false;
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+        }
+    });
+}
