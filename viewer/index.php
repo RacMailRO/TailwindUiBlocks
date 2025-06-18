@@ -417,7 +417,14 @@
        </div>
    </div>
 
-   <script src="js/app.js"></script>
+    <script src="js/utils.js" type="module"></script>
+    <script src="js/ui.js" type="module"></script>
+    <script src="js/editor.js" type="module"></script>
+    <script src="js/splitResizer.js" type="module"></script>
+    <script src="js/localStorageManager.js" type="module"></script>
+    <script src="js/favorites.js" type="module"></script>
+    <script src="js/componentManager.js" type="module"></script>
+    <script src="js/main.js" type="module"></script>
     <script>
         // Initialize with current component data
         <?php if ($currentComponent): ?>

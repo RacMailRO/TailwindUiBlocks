@@ -1,77 +1,58 @@
 /**
  * Main application JavaScript for Tailwind UI Blocks Viewer
  */
+import {
+    safeLocalStorageSetItem,
+    safeLocalStorageGetItem,
+    showToast,
+    generateFullHtmlForContent,
+    updateURL
+} from './utils.js';
 
 class TailwindUIViewer {
     constructor() {
         this.currentComponent = window.currentComponent || null;
-        this.currentTheme = localStorage.getItem('theme') || 'light';
-        this.currentBreakpoint = localStorage.getItem('breakpoint') || 'desktop';
-        this.currentWidth = parseInt(localStorage.getItem('width')) || 1200;
+        // Initialize properties that depend on localStorage using the imported helper
+        this.currentTheme = safeLocalStorageGetItem('theme', 'light');
+        this.currentBreakpoint = safeLocalStorageGetItem('breakpoint', 'desktop');
+        this.currentWidth = parseInt(safeLocalStorageGetItem('width', '1200'));
         this.sidebarOpen = true;
-        this.currentView = localStorage.getItem('view') || 'split';
-        this.splitOrientation = localStorage.getItem('splitOrientation') || 'horizontal';
+        this.currentView = safeLocalStorageGetItem('view', 'split');
+        this.splitOrientation = safeLocalStorageGetItem('splitOrientation', 'horizontal');
         this.editor = null;
         this.splitEditor = null;
         this.splitEditorVertical = null;
-        this.editorTheme = localStorage.getItem('editorTheme') || 'vs-dark';
+        this.editorTheme = safeLocalStorageGetItem('editorTheme', 'vs-dark');
         this.scrollPosition = 0;
         this.isComponentModified = false;
-        // Defer initialization of these from localStorage until helper is available
-        // this.previewSectionSize = localStorage.getItem('previewSectionSize') || '50';
+        this.previewSectionSize = safeLocalStorageGetItem('previewSectionSize', '50');
+        this.favorites = [];
         
         this.init();
-
-        // Initialize properties that depend on localStorage *after* helpers are defined (or call helpers directly in constructor)
-        this.currentTheme = this.safeLocalStorageGetItem('theme', 'light');
-        this.currentBreakpoint = this.safeLocalStorageGetItem('breakpoint', 'desktop');
-        this.currentWidth = parseInt(this.safeLocalStorageGetItem('width', '1200'));
-        this.currentView = this.safeLocalStorageGetItem('view', 'split');
-        this.splitOrientation = this.safeLocalStorageGetItem('splitOrientation', 'horizontal');
-        this.editorTheme = this.safeLocalStorageGetItem('editorTheme', 'vs-dark');
-        this.previewSectionSize = this.safeLocalStorageGetItem('previewSectionSize', '50');
-        this.favorites = [];
-
-    }
-
-    safeLocalStorageSetItem(key, value) {
-        try {
-            localStorage.setItem(key, value);
-        } catch (e) {
-            console.warn(`Failed to set item in localStorage: ${key}`, e);
-            // Optionally, notify the user if settings can't be saved.
-            // this.showToast('Warning: Could not save settings. LocalStorage might be disabled or full.', 'error');
-        }
-    }
-
-    safeLocalStorageGetItem(key, defaultValue) {
-        try {
-            const value = localStorage.getItem(key);
-            return value === null ? defaultValue : value;
-        } catch (e) {
-            console.warn(`Failed to get item from localStorage: ${key}`, e);
-            return defaultValue;
-        }
     }
     
     init() {
-        this.initTheme();
-        this.initEventListeners();
-        this.initSidebar();
-        this.initBreakpoints();
-        this.initWidthAdjuster();
-        this.initSearch();
-        this.initMonacoEditor();
-        this.initSplitView();
-        this.initComponentActions();
-        this.initResizers();
-        this.initFavorites(); // Initialize favorites system
-        this.restoreSettings();
-        this.updateBreakpointDisplay();
+        // Import and call init functions from ui.js
+        initTheme(this);
+        initSidebar(this);
+        initGlobalEventListeners(this); // For general UI event listeners
+
+        // Other initializations will be called here from their respective modules
+        // this.initBreakpoints(); // Will be in componentManager.js
+        // this.initWidthAdjuster(); // Will be in componentManager.js
+        // this.initSearch(); // Will be in componentManager.js
+        // this.initMonacoEditor(); // Will be in editor.js
+        // this.initSplitView(); // Will be in splitResizer.js
+        // this.initComponentActions(); // Will be in componentManager.js
+        // this.initResizers(); // Will be in splitResizer.js
+        // this.initFavorites(); // Will be in favorites.js
+        // this.restoreSettings(); // Will be in localStorageManager.js
+
+        updateBreakpointDisplay(this); // Initial call after settings are potentially restored.
     }
 
     initFavorites() {
-        const storedFavorites = this.safeLocalStorageGetItem('favoriteComponents', '[]');
+        const storedFavorites = safeLocalStorageGetItem('favoriteComponents', '[]');
         try {
             this.favorites = JSON.parse(storedFavorites);
         } catch (e) {
@@ -108,7 +89,7 @@ class TailwindUIViewer {
             this.favorites.push(identifier); // Add to favorites
         }
 
-        this.safeLocalStorageSetItem('favoriteComponents', JSON.stringify(this.favorites));
+        safeLocalStorageSetItem('favoriteComponents', JSON.stringify(this.favorites));
         this.renderFavoritesList();
         this.updateFavoriteStarIcons(); // Update all stars
     }
@@ -267,11 +248,11 @@ class TailwindUIViewer {
         
         if (isDark) {
             document.documentElement.classList.remove('dark');
-            this.safeLocalStorageSetItem('theme', 'light');
+            safeLocalStorageSetItem('theme', 'light');
             this.currentTheme = 'light';
         } else {
             document.documentElement.classList.add('dark');
-            this.safeLocalStorageSetItem('theme', 'dark');
+            safeLocalStorageSetItem('theme', 'dark');
             this.currentTheme = 'dark';
         }
         
@@ -420,8 +401,8 @@ class TailwindUIViewer {
         this.currentWidth = parseInt(width);
         
         // Save to localStorage
-        this.safeLocalStorageSetItem('breakpoint', this.currentBreakpoint);
-        this.safeLocalStorageSetItem('width', this.currentWidth.toString());
+        safeLocalStorageSetItem('breakpoint', this.currentBreakpoint);
+        safeLocalStorageSetItem('width', this.currentWidth.toString());
         
         // Update active button
         document.querySelectorAll('.breakpoint-btn').forEach(btn => {
@@ -454,7 +435,7 @@ class TailwindUIViewer {
         if (widthSlider) {
             widthSlider.addEventListener('input', (e) => {
                 this.currentWidth = parseInt(e.target.value);
-                this.safeLocalStorageSetItem('width', this.currentWidth.toString());
+                safeLocalStorageSetItem('width', this.currentWidth.toString());
                 this.updateBreakpointFromWidth();
                 this.updateContainerWidths();
                 this.updateBreakpointDisplay();
@@ -474,7 +455,7 @@ class TailwindUIViewer {
         
         if (newBreakpoint !== this.currentBreakpoint) {
             this.currentBreakpoint = newBreakpoint;
-            this.safeLocalStorageSetItem('breakpoint', this.currentBreakpoint);
+            safeLocalStorageSetItem('breakpoint', this.currentBreakpoint);
             this.updateBreakpointButtons();
         }
     }
@@ -631,7 +612,7 @@ class TailwindUIViewer {
     
     switchView(view) {
         this.currentView = view;
-        this.safeLocalStorageSetItem('view', view);
+        safeLocalStorageSetItem('view', view);
         
         const previewView = document.getElementById('preview-view');
         const codeView = document.getElementById('code-view');
@@ -723,7 +704,7 @@ class TailwindUIViewer {
             iframeContainer.className = 'mb-4 h-96 border border-gray-200 dark:border-gray-700 rounded overflow-hidden';
             const iframe = document.createElement('iframe');
             iframe.className = 'w-full h-full';
-            iframe.srcdoc = this.generateFullHtmlForContent(example.html);
+            iframe.srcdoc = generateFullHtmlForContent(example.html, this.currentTheme);
             iframeContainer.appendChild(iframe);
             exampleContainer.appendChild(iframeContainer);
 
@@ -765,35 +746,10 @@ class TailwindUIViewer {
             }
         });
     }
-
-    // Helper to generate full HTML for iframe srcdoc
-    generateFullHtmlForContent(content) {
-        return `
-            <!DOCTYPE html>
-            <html lang="en" class="${this.currentTheme === 'dark' ? 'dark' : ''}">
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Example Preview</title>
-                <script src="https://cdn.tailwindcss.com"></script>
-                <script>
-                    tailwind.config = {
-                        darkMode: 'class',
-                        theme: { extend: { fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] }}}
-                    }
-                </script>
-                <style>body { font-family: 'Inter', system-ui, sans-serif; }</style>
-            </head>
-            <body class="bg-white dark:bg-gray-900 p-4">
-                ${content}
-            </body>
-            </html>
-        `;
-    }
     
     toggleEditorTheme() {
         this.editorTheme = this.editorTheme === 'vs' ? 'vs-dark' : 'vs';
-        this.safeLocalStorageSetItem('editorTheme', this.editorTheme);
+        safeLocalStorageSetItem('editorTheme', this.editorTheme);
         
         // Update main editor theme
         if (this.editor) {
@@ -985,29 +941,11 @@ class TailwindUIViewer {
         
         try {
             await navigator.clipboard.writeText(code);
-            this.showToast('Code copied to clipboard!', 'success');
+            showToast('Code copied to clipboard!', 'success');
         } catch (error) {
             console.error('Failed to copy code:', error);
-            this.showToast('Failed to copy code', 'error');
+            showToast('Failed to copy code', 'error');
         }
-    }
-    
-    showToast(message, type = 'info') {
-        const toast = document.createElement('div');
-        toast.className = `fixed top-4 right-4 px-4 py-2 rounded-lg text-white z-50 transition-opacity duration-300 ${
-            type === 'success' ? 'bg-green-600' : 
-            type === 'error' ? 'bg-red-600' : 'bg-blue-600'
-        }`;
-        toast.textContent = message;
-        
-        document.body.appendChild(toast);
-        
-        setTimeout(() => {
-            toast.style.opacity = '0';
-            setTimeout(() => {
-                document.body.removeChild(toast);
-            }, 300);
-        }, 3000);
     }
     
     updateComponentPreview() {
@@ -1105,7 +1043,7 @@ class TailwindUIViewer {
                 this.currentComponent = await response.json();
             } else {
                 console.error(`Failed to load component data: ${response.status} ${response.statusText}`);
-                this.showToast(`Error loading component data (${response.status}). Component view may be outdated.`, 'error');
+                showToast(`Error loading component data (${response.status}). Component view may be outdated.`, 'error');
                 this.currentComponent = null; // Explicitly set to null on failure
             }
             
@@ -1114,7 +1052,7 @@ class TailwindUIViewer {
 
             // Update URL without page reload
             // Pass all relevant parameters to keep the URL fully representative
-            this.updateURL({
+            updateURL({
                 category: category,
                 subcategory: subcategory,
                 component: component,
@@ -1125,7 +1063,7 @@ class TailwindUIViewer {
             
         } catch (error) {
             console.error('Error loading component:', error);
-            this.showToast('Failed to load component', 'error');
+            showToast('Failed to load component', 'error');
         }
     }
     
@@ -1161,7 +1099,7 @@ class TailwindUIViewer {
     
     setSplitOrientation(orientation) {
         this.splitOrientation = orientation;
-        this.safeLocalStorageSetItem('splitOrientation', orientation);
+        safeLocalStorageSetItem('splitOrientation', orientation);
         
         const horizontalBtn = document.getElementById('horizontal-split');
         const verticalBtn = document.getElementById('vertical-split');
@@ -1313,7 +1251,7 @@ class TailwindUIViewer {
                 previewSection.style.flex = `1 1 ${percentage}%`;
                 codeSection.style.flex = `1 1 ${100 - percentage}%`;
                 this.previewSectionSize = percentage.toString();
-                this.safeLocalStorageSetItem('previewSectionSize', this.previewSectionSize);
+                safeLocalStorageSetItem('previewSectionSize', this.previewSectionSize);
             }
         });
         
@@ -1368,7 +1306,7 @@ class TailwindUIViewer {
                 previewSection.style.flex = `0 0 ${newLeftWidth}px`;
                 codeSection.style.flex = `1 1 auto`;
                 this.previewSectionSize = percentage.toString();
-                this.safeLocalStorageSetItem('previewSectionSize', this.previewSectionSize);
+                safeLocalStorageSetItem('previewSectionSize', this.previewSectionSize);
                 
                 // Update breakpoint and width display based on actual preview width
                 this.updateBreakpointFromPreviewSize(newLeftWidth);
@@ -1504,13 +1442,13 @@ class TailwindUIViewer {
     
     saveComponent() {
         if (!this.currentComponent) {
-            this.showToast('No component selected', 'error');
+            showToast('No component selected', 'error');
             return;
         }
         
         let code = this.getCurrentCode();
         if (!code) {
-            this.showToast('No code to save', 'error');
+            showToast('No code to save', 'error');
             return;
         }
         
@@ -1527,7 +1465,7 @@ class TailwindUIViewer {
     saveAsNewComponent() {
         const code = this.getCurrentCode();
         if (!code) {
-            this.showToast('No code to save', 'error');
+            showToast('No code to save', 'error');
             return;
         }
         
@@ -1611,7 +1549,7 @@ class TailwindUIViewer {
         const code = this.getCurrentCode();
         
         if (!code) {
-            this.showToast('No code to save', 'error');
+            showToast('No code to save', 'error');
             return;
         }
         
@@ -1654,17 +1592,17 @@ class TailwindUIViewer {
             const result = await response.json();
             
             if (result.success) {
-                this.showToast('Component saved successfully!', 'success');
+                showToast('Component saved successfully!', 'success');
                 this.isComponentModified = false;
                 
                 // Reload sidebar to show new component
                 location.reload();
             } else {
-                this.showToast(result.error || 'Failed to save component', 'error');
+                showToast(result.error || 'Failed to save component', 'error');
             }
         } catch (error) {
             console.error('Save error:', error);
-            this.showToast('Failed to save component', 'error');
+            showToast('Failed to save component', 'error');
         }
     }
     
@@ -1689,8 +1627,8 @@ class TailwindUIViewer {
         this.currentWidth = newWidth;
         
         // Save to localStorage
-        this.safeLocalStorageSetItem('breakpoint', this.currentBreakpoint);
-        this.safeLocalStorageSetItem('width', this.currentWidth.toString());
+        safeLocalStorageSetItem('breakpoint', this.currentBreakpoint);
+        safeLocalStorageSetItem('width', this.currentWidth.toString());
         
         // Update UI elements
         this.updateBreakpointButtons();
@@ -1721,21 +1659,6 @@ class TailwindUIViewer {
         if (widthDisplay) {
             widthDisplay.textContent = `${this.currentWidth}px`;
         }
-    }
-    
-    updateURL(params) {
-        const url = new URL(window.location);
-        // Clear existing relevant params before setting new ones to avoid conflicts
-        // or ensure all relevant params are always passed in `params` object.
-        // For now, direct set/update.
-        Object.keys(params).forEach(key => {
-            if (params[key] !== undefined && params[key] !== null) {
-                url.searchParams.set(key, params[key]);
-            } else {
-                url.searchParams.delete(key); // Remove if value is null/undefined
-            }
-        });
-        window.history.replaceState({}, '', url.toString());
     }
 }
 
