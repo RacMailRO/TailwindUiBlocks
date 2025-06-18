@@ -105,6 +105,27 @@ function getComponent($category, $subcategory, $component) {
             }
         }
     }
+
+    // Load examples
+    $examplesDir = $componentPath . '/examples';
+    if (is_dir($examplesDir)) {
+        $exampleFiles = scandir($examplesDir);
+        $data['examples'] = [];
+        foreach ($exampleFiles as $exampleFile) {
+            if (pathinfo($exampleFile, PATHINFO_EXTENSION) === 'html') {
+                $exampleFilePath = $examplesDir . '/' . $exampleFile;
+                $exampleName = pathinfo($exampleFile, PATHINFO_FILENAME);
+                // Convert kebab-case or snake_case to Title Case for example name
+                $prettyName = ucwords(str_replace(['-', '_'], ' ', $exampleName));
+                $data['examples'][] = [
+                    'name' => $prettyName,
+                    'slug' => $exampleName,
+                    'html' => file_get_contents($exampleFilePath)
+                ];
+            }
+        }
+        // Sort examples by name if needed, for now, directory order
+    }
     
     return $data;
 }
