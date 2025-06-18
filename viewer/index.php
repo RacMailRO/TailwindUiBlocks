@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tailwind UI Blocks Library</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/@heroicons/react@2.0.18/24/outline/index.js" type="module"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/editor/editor.main.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
     <style>
@@ -375,8 +374,10 @@
        </div>
    </div>
 
-   <script src="js/app.js"></script>
+   <!-- <script src="js/app.js"></script> -->
     <script>
+        console.log('Inline script loaded');
+        
         // Initialize with current component data
         <?php if ($currentComponent): ?>
             window.currentComponent = <?php echo json_encode($currentComponent); ?>;
@@ -387,6 +388,256 @@
             document.documentElement.classList.add('dark');
         } else {
             document.documentElement.classList.remove('dark');
+        }
+        
+        // Fallback navigation functionality in case main JS fails
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, setting up fallback navigation');
+            
+            // Ensure we don't have duplicate event listeners
+            if (window.navigationInitialized) {
+                console.log('Navigation already initialized, skipping...');
+                return;
+            }
+            window.navigationInitialized = true;
+            
+            // Add navigation toggle functionality
+            const toggles = document.querySelectorAll('.subcategory-toggle');
+            console.log('Found toggles:', toggles.length);
+            
+            toggles.forEach(function(toggle) {
+                toggle.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Toggle clicked:', this.dataset.target);
+                    
+                    const target = this.dataset.target;
+                    const targetElement = document.getElementById(target);
+                    const arrow = this.querySelector('svg');
+                    
+                    if (targetElement) {
+                        if (targetElement.classList.contains('hidden')) {
+                            targetElement.classList.remove('hidden');
+                            if (arrow) arrow.style.transform = 'rotate(0deg)';
+                            console.log('Expanded:', target);
+                        } else {
+                            targetElement.classList.add('hidden');
+                            if (arrow) arrow.style.transform = 'rotate(-90deg)';
+                            console.log('Collapsed:', target);
+                        }
+                    } else {
+                        console.log('Target element not found:', target);
+                    }
+                });
+            });
+            
+            // Add component link click handlers for AJAX loading
+            attachComponentLinks();
+            
+            // Add search functionality
+            const searchInput = document.getElementById('search-input');
+            if (searchInput) {
+                console.log('Search input found, adding event listener');
+                searchInput.addEventListener('input', function(e) {
+                    console.log('Search input:', e.target.value);
+                    if (e.target.value.length >= 2) {
+                        performSearch(e.target.value);
+                    } else if (e.target.value.length === 0) {
+                        // Reload component tree instead of full page
+                        loadComponentTree();
+                    }
+                });
+            }
+        });
+        
+        // Function to attach component link event handlers
+        function attachComponentLinks() {
+            console.log('Attaching component links for AJAX loading');
+            const componentLinks = document.querySelectorAll('.component-link');
+            
+            componentLinks.forEach(function(link) {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const category = this.dataset.category;
+                    const subcategory = this.dataset.subcategory;
+                    const component = this.dataset.component;
+                    
+                    console.log('Loading component via AJAX:', category, subcategory, component);
+                    loadComponent(category, subcategory, component);
+                });
+            });
+        }
+        
+        // Function to load component via AJAX
+        function loadComponent(category, subcategory, component) {
+            console.log('AJAX loading component:', category, subcategory, component);
+            
+            // Update URL without reloading page
+            const url = new URL(window.location);
+            url.searchParams.set('category', category);
+            url.searchParams.set('subcategory', subcategory);
+            url.searchParams.set('component', component);
+            window.history.pushState({}, '', url);
+            
+            // Load component data
+            fetch(`api/component-data.php?category=${category}&subcategory=${subcategory}&component=${component}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        updateComponentDisplay(data.component);
+                    } else {
+                        console.error('Failed to load component:', data);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading component:', error);
+                });
+        }
+        
+        // Function to update component display
+        function updateComponentDisplay(component) {
+            console.log('Updating component display:', component);
+            
+            // Update component title and description
+            const titleElement = document.querySelector('h2.text-lg');
+            const descElement = document.querySelector('p.text-sm.text-gray-500');
+            
+            if (titleElement) {
+                titleElement.textContent = component.metadata.name;
+            }
+            if (descElement) {
+                descElement.textContent = component.metadata.description;
+            }
+            
+            // Update component preview iframe
+            const frames = [
+                document.getElementById('component-frame'),
+                document.getElementById('split-component-frame'),
+                document.getElementById('split-component-frame-vertical')
+            ];
+            
+            frames.forEach(frame => {
+                if (frame) {
+                    const currentTheme = document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+                    frame.src = `api/render.php?category=${component.category}&subcategory=${component.subcategory}&component=${component.slug}&theme=${currentTheme}`;
+                }
+            });
+            
+            // Update active component in navigation
+            updateActiveComponent(component.category, component.subcategory, component.slug);
+            
+            // Show component view if we're on welcome screen
+            const welcomeScreen = document.querySelector('.h-full.flex.items-center.justify-center');
+            if (welcomeScreen) {
+                welcomeScreen.style.display = 'none';
+            }
+            
+            // Show preview view by default
+            switchToPreviewView();
+        }
+        
+        // Function to update active component highlighting
+        function updateActiveComponent(category, subcategory, component) {
+            // Remove active state from all component links
+            document.querySelectorAll('.component-link').forEach(link => {
+                link.classList.remove('bg-blue-50', 'dark:bg-blue-900/20', 'text-blue-600', 'dark:text-blue-400');
+            });
+            
+            // Add active state to current component
+            const activeLink = document.querySelector(`[data-category="${category}"][data-subcategory="${subcategory}"][data-component="${component}"]`);
+            if (activeLink) {
+                activeLink.classList.add('bg-blue-50', 'dark:bg-blue-900/20', 'text-blue-600', 'dark:text-blue-400');
+            }
+        }
+        
+        // Function to switch to preview view
+        function switchToPreviewView() {
+            const previewView = document.getElementById('preview-view');
+            const codeView = document.getElementById('code-view');
+            const splitView = document.getElementById('split-view');
+            
+            if (previewView) {
+                previewView.classList.remove('hidden');
+            }
+            if (codeView) {
+                codeView.classList.add('hidden');
+            }
+            if (splitView) {
+                splitView.classList.add('hidden');
+            }
+            
+            // Update tab states
+            const previewTab = document.getElementById('preview-tab');
+            const codeTab = document.getElementById('code-tab');
+            const splitTab = document.getElementById('split-tab');
+            
+            [previewTab, codeTab, splitTab].forEach(tab => {
+                if (tab) {
+                    tab.classList.remove('bg-white', 'dark:bg-gray-800', 'text-gray-900', 'dark:text-white', 'shadow-sm');
+                    tab.classList.add('text-gray-600', 'dark:text-gray-300');
+                }
+            });
+            
+            if (previewTab) {
+                previewTab.classList.add('bg-white', 'dark:bg-gray-800', 'text-gray-900', 'dark:text-white', 'shadow-sm');
+                previewTab.classList.remove('text-gray-600', 'dark:text-gray-300');
+            }
+        }
+        
+        // Function to load component tree (for search reset)
+        function loadComponentTree() {
+            window.location.href = window.location.pathname;
+        }
+        
+        // Simple search function
+        function performSearch(query) {
+            console.log('Performing search for:', query);
+            fetch('api/search.php?q=' + encodeURIComponent(query))
+                .then(response => response.json())
+                .then(results => {
+                    console.log('Search results:', results);
+                    displaySearchResults(results);
+                })
+                .catch(error => {
+                    console.error('Search error:', error);
+                });
+        }
+        
+        // Display search results
+        function displaySearchResults(results) {
+            const sidebar = document.querySelector('nav.p-4');
+            if (!sidebar) {
+                console.log('Sidebar not found');
+                return;
+            }
+            
+            let html = '<div class="space-y-2"><h3 class="text-sm font-medium text-gray-900 dark:text-white mb-2">Search Results</h3>';
+            
+            if (results.length === 0) {
+                html += '<p class="text-sm text-gray-500 dark:text-gray-400">No components found.</p>';
+            } else {
+                results.forEach(result => {
+                    html += `
+                        <div class="mb-2">
+                            <button class="component-link w-full text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 p-2 rounded"
+                                    data-category="${result.category}"
+                                    data-subcategory="${result.subcategory}"
+                                    data-component="${result.component}">
+                                <div class="font-medium">${result.name}</div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400">${result.category}/${result.subcategory}</div>
+                            </button>
+                        </div>
+                    `;
+                });
+            }
+            
+            html += '</div>';
+            sidebar.innerHTML = html;
+            
+            // Reattach event listeners for the new search result links
+            attachComponentLinks();
         }
     </script>
 </body>

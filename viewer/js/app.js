@@ -19,12 +19,15 @@ class ComponentViewer {
     }
     
     init() {
+        console.log('ComponentViewer initializing...');
+        
         // Apply initial theme
         this.applyTheme();
         
         // Initialize all components
         this.initThemeToggle();
         this.initSearch();
+        this.initNavigation();
         this.initBreakpointButtons();
         this.initWidthAdjuster();
         this.initViewTabs();
@@ -48,6 +51,8 @@ class ComponentViewer {
         
         // Restore split orientation
         this.setSplitOrientation(this.splitOrientation);
+        
+        console.log('ComponentViewer initialized successfully');
     }
     
     applyTheme() {
@@ -91,8 +96,8 @@ class ComponentViewer {
     
     async searchComponents(query) {
         if (query.length < 2) {
-            // Show all components
-            this.loadComponentList();
+            // Reload the page to show all components
+            window.location.reload();
             return;
         }
         
@@ -106,7 +111,7 @@ class ComponentViewer {
     }
     
     displaySearchResults(results) {
-        const sidebar = document.querySelector('.sidebar-content');
+        const sidebar = document.querySelector('nav.p-4');
         if (!sidebar) return;
         
         let html = '<div class="p-4"><h3 class="text-sm font-medium text-gray-900 dark:text-white mb-2">Search Results</h3>';
@@ -119,7 +124,7 @@ class ComponentViewer {
                     <div class="mb-2">
                         <button class="component-link w-full text-left p-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
                                 data-category="${result.category}" data-subcategory="${result.subcategory}" data-component="${result.component}">
-                            <div class="font-medium">${result.title}</div>
+                            <div class="font-medium">${result.name}</div>
                             <div class="text-xs text-gray-500 dark:text-gray-400">${result.category}/${result.subcategory}</div>
                         </button>
                     </div>
@@ -131,6 +136,42 @@ class ComponentViewer {
         sidebar.innerHTML = html;
         
         // Reattach event listeners
+        this.attachComponentLinks();
+    }
+    
+    initNavigation() {
+        console.log('Initializing navigation...');
+        
+        // Initialize subcategory toggles
+        const toggles = document.querySelectorAll('.subcategory-toggle');
+        console.log('Found', toggles.length, 'subcategory toggles');
+        
+        toggles.forEach(toggle => {
+            toggle.addEventListener('click', (e) => {
+                e.preventDefault();
+                console.log('Toggle clicked:', toggle.dataset.target);
+                
+                const target = toggle.dataset.target;
+                const targetElement = document.getElementById(target);
+                const arrow = toggle.querySelector('svg');
+                
+                if (targetElement) {
+                    if (targetElement.classList.contains('hidden')) {
+                        targetElement.classList.remove('hidden');
+                        arrow.style.transform = 'rotate(0deg)';
+                        console.log('Expanded:', target);
+                    } else {
+                        targetElement.classList.add('hidden');
+                        arrow.style.transform = 'rotate(-90deg)';
+                        console.log('Collapsed:', target);
+                    }
+                } else {
+                    console.log('Target element not found:', target);
+                }
+            });
+        });
+        
+        // Initialize component links
         this.attachComponentLinks();
     }
     
@@ -381,11 +422,21 @@ class ComponentViewer {
     }
     
     initMonacoEditor() {
+        // Wait for Monaco loader to be available
         if (typeof require !== 'undefined') {
-            require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' }});
-            require(['vs/editor/editor.main'], () => {
-                this.createEditor();
-            });
+            try {
+                require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' }});
+                require(['vs/editor/editor.main'], () => {
+                    this.createEditor();
+                });
+            } catch (error) {
+                console.warn('Monaco editor failed to initialize:', error);
+            }
+        } else {
+            // Monaco loader not ready yet, wait and retry
+            setTimeout(() => {
+                this.initMonacoEditor();
+            }, 100);
         }
     }
     
@@ -805,3 +856,267 @@ class ComponentViewer {
                 localStorage.setItem('previewSectionSize', this.previewSectionSize);
             }
         });
+        
+        document.addEventListener('mouseup', () => {
+            if (isResizing) {
+                isResizing = false;
+                document.body.style.cursor = '';
+                document.body.style.userSelect = '';
+            }
+        });
+    }
+    
+    initVerticalResizer(resizer) {
+        let isResizing = false;
+        let startX = 0;
+        let startLeftWidth = 0;
+        
+        resizer.addEventListener('mousedown', (e) => {
+            isResizing = true;
+            document.body.style.cursor = 'col-resize';
+            document.body.style.userSelect = 'none';
+            
+            const container = document.getElementById('vertical-split-container');
+            if (!container) return;
+            
+            startX = e.clientX;
+            const previewSection = document.getElementById('preview-section-vertical');
+            
+            if (previewSection) {
+                const previewRect = previewSection.getBoundingClientRect();
+                startLeftWidth = previewRect.width;
+            }
+            
+            e.preventDefault();
+        });
+        
+        document.addEventListener('mousemove', (e) => {
+            if (!isResizing) return;
+            
+            const container = document.getElementById('vertical-split-container');
+            if (!container) return;
+            
+            const deltaX = e.clientX - startX;
+            const containerRect = container.getBoundingClientRect();
+            const newLeftWidth = Math.max(containerRect.width * 0.2, Math.min(containerRect.width * 0.8, startLeftWidth + deltaX));
+            const percentage = (newLeftWidth / containerRect.width) * 100;
+            
+            const previewSection = document.getElementById('preview-section-vertical');
+            const codeSection = document.getElementById('code-section-vertical');
+            
+            if (previewSection && codeSection) {
+                previewSection.style.flex = `0 0 ${newLeftWidth}px`;
+                codeSection.style.flex = `1 1 auto`;
+                this.previewSectionSize = percentage.toString();
+                localStorage.setItem('previewSectionSize', this.previewSectionSize);
+                
+                // Update breakpoint and width display based on actual preview width
+                this.updateBreakpointFromPreviewSize(newLeftWidth);
+            }
+        });
+        
+        document.addEventListener('mouseup', () => {
+            if (isResizing) {
+                isResizing = false;
+                document.body.style.cursor = '';
+                document.body.style.userSelect = '';
+            }
+        });
+    }
+    
+    // Component management methods
+    initComponentActions() {
+        const saveBtn = document.getElementById('save-component');
+        const saveAsBtn = document.getElementById('save-as-component');
+        
+        if (saveBtn) {
+            saveBtn.addEventListener('click', () => this.saveComponent());
+        }
+        
+        if (saveAsBtn) {
+            saveAsBtn.addEventListener('click', () => this.saveAsNewComponent());
+        }
+        
+        // Modal controls
+        const saveModal = document.getElementById('save-modal');
+        const closeSaveModal = document.getElementById('close-save-modal');
+        const cancelSave = document.getElementById('cancel-save');
+        const saveForm = document.getElementById('save-component-form');
+        
+        if (closeSaveModal) {
+            closeSaveModal.addEventListener('click', () => this.closeSaveModal());
+        }
+        
+        if (cancelSave) {
+            cancelSave.addEventListener('click', () => this.closeSaveModal());
+        }
+        
+        if (saveForm) {
+            saveForm.addEventListener('submit', (e) => this.handleSaveSubmit(e));
+        }
+        
+        // Copy button
+        const copyBtn = document.getElementById('copy-code');
+        if (copyBtn) {
+            copyBtn.addEventListener('click', () => this.copyCode());
+        }
+    }
+    
+    async saveComponent() {
+        if (!this.currentComponent) {
+            this.showToast('No component selected', 'error');
+            return;
+        }
+        
+        let code = '';
+        if (this.currentView === 'code' && this.editor) {
+            code = this.editor.getValue();
+        } else if (this.currentView === 'split') {
+            if (this.splitOrientation === 'horizontal' && this.splitEditor) {
+                code = this.splitEditor.getValue();
+            } else if (this.splitOrientation === 'vertical' && this.splitEditorVertical) {
+                code = this.splitEditorVertical.getValue();
+            }
+        } else {
+            code = this.currentComponent.html;
+        }
+        
+        const data = {
+            action: 'save',
+            category: this.currentComponent.category,
+            subcategory: this.currentComponent.subcategory,
+            component: this.currentComponent.component,
+            html: code
+        };
+        
+        try {
+            const response = await fetch('api/save-component.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            
+            const result = await response.json();
+            if (result.success) {
+                this.showToast('Component saved successfully!', 'success');
+                this.isComponentModified = false;
+            } else {
+                this.showToast(result.message || 'Failed to save component', 'error');
+            }
+        } catch (error) {
+            console.error('Save error:', error);
+            this.showToast('Error saving component', 'error');
+        }
+    }
+    
+    saveAsNewComponent() {
+        const modal = document.getElementById('save-modal');
+        if (modal) {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            
+            // Pre-fill form with current component data
+            if (this.currentComponent) {
+                document.getElementById('save-folder').value = this.currentComponent.category + '/' + this.currentComponent.subcategory;
+                document.getElementById('save-title').value = this.currentComponent.title + ' Copy';
+                document.getElementById('save-description').value = this.currentComponent.description || '';
+            }
+        }
+    }
+    
+    closeSaveModal() {
+        const modal = document.getElementById('save-modal');
+        if (modal) {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+    }
+    
+    async handleSaveSubmit(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(e.target);
+        const folder = formData.get('folder');
+        const title = formData.get('title');
+        const description = formData.get('description');
+        
+        if (!folder || !title) {
+            this.showToast('Please fill in all required fields', 'error');
+            return;
+        }
+        
+        const [category, subcategory] = folder.split('/');
+        const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+        
+        let code = '';
+        if (this.currentView === 'code' && this.editor) {
+            code = this.editor.getValue();
+        } else if (this.currentView === 'split') {
+            if (this.splitOrientation === 'horizontal' && this.splitEditor) {
+                code = this.splitEditor.getValue();
+            } else if (this.splitOrientation === 'vertical' && this.splitEditorVertical) {
+                code = this.splitEditorVertical.getValue();
+            }
+        } else {
+            code = this.currentComponent?.html || '';
+        }
+        
+        const metadata = {
+            title,
+            description,
+            category,
+            subcategory
+        };
+        
+        try {
+            const result = await this.performSave(category, subcategory, slug, code, metadata);
+            if (result.success) {
+                this.showToast('Component saved successfully!', 'success');
+                this.closeSaveModal();
+                this.isComponentModified = false;
+                
+                // Optionally redirect to the new component
+                window.location.href = `?category=${category}&subcategory=${subcategory}&component=${slug}`;
+            } else {
+                this.showToast(result.message || 'Failed to save component', 'error');
+            }
+        } catch (error) {
+            console.error('Save error:', error);
+            this.showToast('Error saving component', 'error');
+        }
+    }
+    
+    async performSave(category, subcategory, slug, code, metadata) {
+        const data = {
+            action: 'save_as',
+            category,
+            subcategory,
+            component: slug,
+            html: code,
+            metadata
+        };
+        
+        const response = await fetch('api/save-component.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        
+        return await response.json();
+    }
+    
+    updateURL(params) {
+        const url = new URL(window.location);
+        Object.keys(params).forEach(key => {
+            if (params[key]) {
+                url.searchParams.set(key, params[key]);
+            }
+        });
+        window.history.replaceState({}, '', url);
+    }
+}
+
+// Initialize the application
+document.addEventListener('DOMContentLoaded', () => {
+    new ComponentViewer();
+});
