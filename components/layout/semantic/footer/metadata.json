@@ -1,0 +1,65 @@
+{
+  "name": "Footer Container",
+  "description": "Semantic footer container for page bottom content and links",
+  "category": "layout",
+  "subcategory": "semantic",
+  "type": "container",
+  "canContain": ["component", "container"],
+  "maxChildren": 5,
+  "tags": ["footer", "bottom", "semantic", "links"],
+  "responsive": true,
+  "darkMode": true,
+  "dependencies": ["tailwindcss"],
+  "version": "1.0.0",
+  "author": "TailwindUI Blocks",
+  "created": "2025-06-19",
+  "updated": "2025-06-19",
+  "defaultProps": {
+    "background": "gray-50",
+    "border": true,
+    "padding": "lg"
+  },
+  "configurableProps": [
+    {
+      "name": "background",
+      "type": "select",
+      "label": "Background",
+      "options": [
+        {"value": "gray-50", "label": "Light Gray"},
+        {"value": "gray-100", "label": "Lighter Gray"},
+        {"value": "gray-900", "label": "Dark Gray"},
+        {"value": "white", "label": "White"},
+        {"value": "transparent", "label": "Transparent"}
+      ],
+      "default": "gray-50"
+    },
+    {
+      "name": "border",
+      "type": "boolean",
+      "label": "Top Border",
+      "default": true,
+      "description": "Add border line at top of footer"
+    },
+    {
+      "name": "padding",
+      "type": "select",
+      "label": "Padding",
+      "options": [
+        {"value": "sm", "label": "Small"},
+        {"value": "md", "label": "Medium"},
+        {"value": "lg", "label": "Large"},
+        {"value": "xl", "label": "Extra Large"}
+      ],
+      "default": "lg"
+    }
+  ],
+  "features": [
+    "Semantic HTML5 footer",
+    "Configurable background",
+    "Optional top border",
+    "Flexible padding options",
+    "Perfect for site footer",
+    "Dark mode support",
+    "Drag & drop compatible"
+  ]
+}

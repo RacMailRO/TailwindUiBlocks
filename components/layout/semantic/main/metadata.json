@@ -1,0 +1,69 @@
+{
+  "name": "Main Container",
+  "description": "Semantic main content area for primary page content",
+  "category": "layout",
+  "subcategory": "semantic",
+  "type": "container",
+  "canContain": ["component", "container"],
+  "maxChildren": 20,
+  "tags": ["main", "content", "semantic", "primary"],
+  "responsive": true,
+  "darkMode": true,
+  "dependencies": ["tailwindcss"],
+  "version": "1.0.0",
+  "author": "TailwindUI Blocks",
+  "created": "2025-06-19",
+  "updated": "2025-06-19",
+  "defaultProps": {
+    "padding": "responsive",
+    "minHeight": "auto",
+    "background": "transparent"
+  },
+  "configurableProps": [
+    {
+      "name": "padding",
+      "type": "select",
+      "label": "Padding",
+      "options": [
+        {"value": "none", "label": "None"},
+        {"value": "sm", "label": "Small"},
+        {"value": "responsive", "label": "Responsive"},
+        {"value": "lg", "label": "Large"}
+      ],
+      "default": "responsive"
+    },
+    {
+      "name": "minHeight",
+      "type": "select",
+      "label": "Minimum Height",
+      "options": [
+        {"value": "auto", "label": "Auto"},
+        {"value": "screen", "label": "Full Screen"},
+        {"value": "96", "label": "Large (24rem)"},
+        {"value": "64", "label": "Medium (16rem)"}
+      ],
+      "default": "auto"
+    },
+    {
+      "name": "background",
+      "type": "select",
+      "label": "Background",
+      "options": [
+        {"value": "transparent", "label": "Transparent"},
+        {"value": "white", "label": "White"},
+        {"value": "gray-50", "label": "Light Gray"},
+        {"value": "gray-100", "label": "Lighter Gray"}
+      ],
+      "default": "transparent"
+    }
+  ],
+  "features": [
+    "Semantic HTML5 main",
+    "Flexible content area",
+    "Configurable padding",
+    "Background options",
+    "Responsive design",
+    "Dark mode support",
+    "Drag & drop compatible"
+  ]
+}

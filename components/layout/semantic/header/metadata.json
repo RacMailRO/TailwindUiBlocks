@@ -1,0 +1,72 @@
+{
+  "name": "Header Container",
+  "description": "Semantic header container for page navigation and branding",
+  "category": "layout",
+  "subcategory": "semantic",
+  "type": "container",
+  "canContain": ["component", "container"],
+  "maxChildren": 3,
+  "tags": ["header", "navigation", "semantic", "top"],
+  "responsive": true,
+  "darkMode": true,
+  "dependencies": ["tailwindcss"],
+  "version": "1.0.0",
+  "author": "TailwindUI Blocks",
+  "created": "2025-06-19",
+  "updated": "2025-06-19",
+  "defaultProps": {
+    "sticky": false,
+    "shadow": true,
+    "background": "white",
+    "height": "auto"
+  },
+  "configurableProps": [
+    {
+      "name": "sticky",
+      "type": "boolean",
+      "label": "Sticky Header",
+      "default": false,
+      "description": "Make header stick to top when scrolling"
+    },
+    {
+      "name": "shadow",
+      "type": "boolean",
+      "label": "Drop Shadow",
+      "default": true,
+      "description": "Add subtle drop shadow"
+    },
+    {
+      "name": "background",
+      "type": "select",
+      "label": "Background",
+      "options": [
+        {"value": "white", "label": "White"},
+        {"value": "gray-50", "label": "Light Gray"},
+        {"value": "gray-900", "label": "Dark Gray"},
+        {"value": "transparent", "label": "Transparent"}
+      ],
+      "default": "white"
+    },
+    {
+      "name": "height",
+      "type": "select",
+      "label": "Height",
+      "options": [
+        {"value": "auto", "label": "Auto"},
+        {"value": "16", "label": "Small (64px)"},
+        {"value": "20", "label": "Medium (80px)"},
+        {"value": "24", "label": "Large (96px)"}
+      ],
+      "default": "auto"
+    }
+  ],
+  "features": [
+    "Semantic HTML5 header",
+    "Sticky positioning option",
+    "Configurable background",
+    "Drop shadow support",
+    "Perfect for navigation",
+    "Dark mode support",
+    "Drag & drop compatible"
+  ]
+}

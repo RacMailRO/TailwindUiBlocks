@@ -1,0 +1,61 @@
+{
+  "name": "Container",
+  "description": "Max-width centered container with responsive padding",
+  "category": "layout",
+  "subcategory": "containers",
+  "type": "container",
+  "canContain": ["component", "container"],
+  "maxChildren": 15,
+  "tags": ["container", "centered", "max-width", "responsive"],
+  "responsive": true,
+  "darkMode": true,
+  "dependencies": ["tailwindcss"],
+  "version": "1.0.0",
+  "author": "TailwindUI Blocks",
+  "created": "2025-06-19",
+  "updated": "2025-06-19",
+  "defaultProps": {
+    "maxWidth": "7xl",
+    "padding": "responsive",
+    "alignment": "center"
+  },
+  "configurableProps": [
+    {
+      "name": "maxWidth",
+      "type": "select",
+      "label": "Max Width",
+      "options": [
+        {"value": "sm", "label": "Small (640px)"},
+        {"value": "md", "label": "Medium (768px)"},
+        {"value": "lg", "label": "Large (1024px)"},
+        {"value": "xl", "label": "Extra Large (1280px)"},
+        {"value": "2xl", "label": "2X Large (1536px)"},
+        {"value": "4xl", "label": "4X Large (896px)"},
+        {"value": "5xl", "label": "5X Large (1024px)"},
+        {"value": "6xl", "label": "6X Large (1152px)"},
+        {"value": "7xl", "label": "7X Large (1280px)"}
+      ],
+      "default": "7xl"
+    },
+    {
+      "name": "padding",
+      "type": "select",
+      "label": "Padding",
+      "options": [
+        {"value": "none", "label": "None"},
+        {"value": "sm", "label": "Small"},
+        {"value": "responsive", "label": "Responsive"},
+        {"value": "lg", "label": "Large"}
+      ],
+      "default": "responsive"
+    }
+  ],
+  "features": [
+    "Responsive max-width",
+    "Centered alignment",
+    "Responsive padding",
+    "Multiple width options",
+    "Dark mode support",
+    "Drag & drop compatible"
+  ]
+}

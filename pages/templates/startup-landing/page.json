@@ -1,0 +1,120 @@
+{
+  "id": "startup-landing-template",
+  "name": "Startup Landing Page",
+  "description": "Complete landing page template for startups with hero, features, pricing, and CTA sections",
+  "category": "landing-pages",
+  "tags": ["startup", "landing", "saas", "business"],
+  "author": "TailwindUI Blocks",
+  "created": "2025-06-19",
+  "updated": "2025-06-19",
+  "version": "1.0.0",
+  "preview": "startup-landing-preview.jpg",
+  "structure": {
+    "type": "page",
+    "children": [
+      {
+        "type": "container",
+        "component": "header",
+        "category": "layout",
+        "subcategory": "semantic",
+        "props": {
+          "sticky": true,
+          "shadow": true
+        },
+        "children": [
+          {
+            "type": "component",
+            "component": "top-navigation",
+            "category": "application-ui",
+            "subcategory": "navigation"
+          }
+        ]
+      },
+      {
+        "type": "container",
+        "component": "main",
+        "category": "layout",
+        "subcategory": "semantic",
+        "children": [
+          {
+            "type": "container",
+            "component": "section",
+            "category": "layout",
+            "subcategory": "containers",
+            "props": {
+              "padding": "lg"
+            },
+            "children": [
+              {
+                "type": "component",
+                "component": "hero-with-image",
+                "category": "marketing",
+                "subcategory": "heroes"
+              }
+            ]
+          },
+          {
+            "type": "container",
+            "component": "section",
+            "category": "layout",
+            "subcategory": "containers",
+            "props": {
+              "padding": "lg",
+              "background": "gray-50"
+            },
+            "children": [
+              {
+                "type": "component",
+                "component": "three-column-features",
+                "category": "marketing",
+                "subcategory": "features"
+              }
+            ]
+          },
+          {
+            "type": "container",
+            "component": "section",
+            "category": "layout",
+            "subcategory": "containers",
+            "props": {
+              "padding": "lg"
+            },
+            "children": [
+              {
+                "type": "component",
+                "component": "simple-pricing",
+                "category": "marketing",
+                "subcategory": "pricing"
+              }
+            ]
+          },
+          {
+            "type": "container",
+            "component": "section",
+            "category": "layout",
+            "subcategory": "containers",
+            "props": {
+              "padding": "lg",
+              "background": "gray-900"
+            },
+            "children": [
+              {
+                "type": "component",
+                "component": "simple-cta",
+                "category": "marketing",
+                "subcategory": "cta"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "container",
+        "component": "footer",
+        "category": "layout",
+        "subcategory": "semantic",
+        "children": []
+      }
+    ]
+  }
+}

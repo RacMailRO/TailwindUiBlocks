@@ -53,6 +53,16 @@
             <div class="p-6 border-b border-gray-200 dark:border-gray-700">
                 <h1 class="text-xl font-bold text-gray-900 dark:text-white"><a href="/viewer/">Tailwind UI Blocks</a></h1>
                 <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Component Library</p>
+                
+                <!-- Navigation Links -->
+                <div class="flex space-x-2 mt-4">
+                    <a href="index.php" class="px-3 py-1.5 text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-lg">
+                        Components
+                    </a>
+                    <a href="page-builder.php" class="px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                        Page Builder
+                    </a>
+                </div>
             </div>
 
             <!-- Search -->

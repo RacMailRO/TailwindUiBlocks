@@ -1,0 +1,73 @@
+{
+  "name": "Flex Column",
+  "description": "Vertical flexbox container for stacking components vertically",
+  "category": "layout",
+  "subcategory": "containers",
+  "type": "container",
+  "canContain": ["component", "container"],
+  "maxChildren": 10,
+  "tags": ["flex", "column", "vertical", "stack"],
+  "responsive": true,
+  "darkMode": true,
+  "dependencies": ["tailwindcss"],
+  "version": "1.0.0",
+  "author": "TailwindUI Blocks",
+  "created": "2025-06-19",
+  "updated": "2025-06-19",
+  "defaultProps": {
+    "gap": 4,
+    "alignment": "stretch",
+    "justification": "start"
+  },
+  "configurableProps": [
+    {
+      "name": "gap",
+      "type": "select",
+      "label": "Gap",
+      "options": [
+        {"value": 1, "label": "Tiny (0.25rem)"},
+        {"value": 2, "label": "Small (0.5rem)"},
+        {"value": 4, "label": "Medium (1rem)"},
+        {"value": 6, "label": "Large (1.5rem)"},
+        {"value": 8, "label": "Extra Large (2rem)"},
+        {"value": 12, "label": "2X Large (3rem)"}
+      ],
+      "default": 4
+    },
+    {
+      "name": "alignment",
+      "type": "select",
+      "label": "Horizontal Alignment",
+      "options": [
+        {"value": "stretch", "label": "Stretch"},
+        {"value": "start", "label": "Left"},
+        {"value": "center", "label": "Center"},
+        {"value": "end", "label": "Right"}
+      ],
+      "default": "stretch"
+    },
+    {
+      "name": "justification",
+      "type": "select",
+      "label": "Vertical Alignment",
+      "options": [
+        {"value": "start", "label": "Top"},
+        {"value": "center", "label": "Center"},
+        {"value": "end", "label": "Bottom"},
+        {"value": "between", "label": "Space Between"},
+        {"value": "around", "label": "Space Around"},
+        {"value": "evenly", "label": "Space Evenly"}
+      ],
+      "default": "start"
+    }
+  ],
+  "features": [
+    "Vertical flexbox layout",
+    "Configurable gap spacing",
+    "Multiple alignment options",
+    "Flexible item sizing",
+    "Perfect for content stacking",
+    "Dark mode support",
+    "Drag & drop compatible"
+  ]
+}

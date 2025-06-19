@@ -197,6 +197,210 @@ function sanitizeComponentHTML($html) {
     
     return $html;
 }
+/**
+ * Page Builder Functions
+ */
+
+/**
+ * Load a page by ID
+ */
+function loadPage($pageId) {
+    $pagesDir = dirname(__DIR__, 2) . '/pages';
+    
+    // Look for the page in all categories
+    $categories = ['landing-pages', 'product-pages', 'about-pages', 'templates'];
+    
+    foreach ($categories as $category) {
+        $categoryPath = $pagesDir . '/' . $category;
+        if (!is_dir($categoryPath)) continue;
+        
+        $pages = scandir($categoryPath);
+        foreach ($pages as $page) {
+            if ($page === '.' || $page === '..' || !is_dir($categoryPath . '/' . $page)) {
+                continue;
+            }
+            
+            $pageFile = $categoryPath . '/' . $page . '/page.json';
+            if (file_exists($pageFile)) {
+                $pageData = json_decode(file_get_contents($pageFile), true);
+                if ($pageData && $pageData['id'] === $pageId) {
+                    $pageData['category'] = $category;
+                    $pageData['slug'] = $page;
+                    return $pageData;
+                }
+            }
+        }
+    }
+    
+    return null;
+}
+
+/**
+ * Get all pages organized by category
+ */
+function getPageTree() {
+    $pagesDir = dirname(__DIR__, 2) . '/pages';
+    $tree = [];
+    
+    if (!is_dir($pagesDir)) {
+        return $tree;
+    }
+    
+    $categories = scandir($pagesDir);
+    foreach ($categories as $category) {
+        if ($category === '.' || $category === '..' || !is_dir($pagesDir . '/' . $category)) {
+            continue;
+        }
+        
+        $categoryPath = $pagesDir . '/' . $category;
+        $pages = scandir($categoryPath);
+        
+        foreach ($pages as $page) {
+            if ($page === '.' || $page === '..' || !is_dir($categoryPath . '/' . $page)) {
+                continue;
+            }
+            
+            $pageFile = $categoryPath . '/' . $page . '/page.json';
+            if (file_exists($pageFile)) {
+                $pageData = json_decode(file_get_contents($pageFile), true);
+                if ($pageData) {
+                    $tree[$category][] = [
+                        'id' => $pageData['id'],
+                        'slug' => $page,
+                        'name' => $pageData['name'] ?? ucfirst(str_replace('-', ' ', $page)),
+                        'description' => $pageData['description'] ?? '',
+                        'path' => $categoryPath . '/' . $page
+                    ];
+                }
+            }
+        }
+    }
+    
+    return $tree;
+}
+
+/**
+ * Save a page
+ */
+function savePage($pageData) {
+    $pagesDir = dirname(__DIR__, 2) . '/pages';
+    $category = $pageData['category'] ?? 'landing-pages';
+    $slug = $pageData['slug'] ?? sanitizeSlug($pageData['name']);
+    
+    // Create directories if they don't exist
+    $categoryPath = $pagesDir . '/' . $category;
+    if (!is_dir($categoryPath)) {
+        mkdir($categoryPath, 0755, true);
+    }
+    
+    $pagePath = $categoryPath . '/' . $slug;
+    if (!is_dir($pagePath)) {
+        mkdir($pagePath, 0755, true);
+    }
+    
+    // Save page.json
+    $pageFile = $pagePath . '/page.json';
+    $success = file_put_contents($pageFile, json_encode($pageData, JSON_PRETTY_PRINT));
+    
+    if ($success) {
+        // Generate HTML version
+        generatePageHTML($pageData, $pagePath);
+        return ['success' => true, 'path' => $pagePath];
+    }
+    
+    return ['success' => false, 'error' => 'Failed to save page'];
+}
+
+/**
+ * Generate HTML from page structure
+ */
+function generatePageHTML($pageData, $pagePath) {
+    $html = renderPageStructure($pageData['structure']);
+    
+    $fullHTML = '<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>' . htmlspecialchars($pageData['name']) . '</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-white dark:bg-gray-900">
+' . $html . '
+</body>
+</html>';
+    
+    file_put_contents($pagePath . '/page.html', $fullHTML);
+}
+
+/**
+ * Render page structure recursively
+ */
+function renderPageStructure($structure) {
+    if (!isset($structure['children']) || !is_array($structure['children'])) {
+        return '';
+    }
+    
+    $html = '';
+    foreach ($structure['children'] as $child) {
+        if ($child['type'] === 'container') {
+            $containerHTML = getComponent($child['category'], $child['subcategory'], $child['component']);
+            if ($containerHTML && isset($containerHTML['html'])) {
+                $html .= $containerHTML['html'];
+            }
+        } elseif ($child['type'] === 'component') {
+            $componentHTML = getComponent($child['category'], $child['subcategory'], $child['component']);
+            if ($componentHTML && isset($componentHTML['html'])) {
+                $html .= $componentHTML['html'];
+            }
+        }
+        
+        // Recursively render children
+        if (isset($child['children'])) {
+            $childStructure = ['children' => $child['children']];
+            $html .= renderPageStructure($childStructure);
+        }
+    }
+    
+    return $html;
+}
+
+/**
+ * Sanitize a string to be used as a slug
+ */
+function sanitizeSlug($string) {
+    $slug = strtolower(trim($string));
+    $slug = preg_replace('/[^a-z0-9-]/', '-', $slug);
+    $slug = preg_replace('/-+/', '-', $slug);
+    return trim($slug, '-');
+}
+
+/**
+ * Delete a page
+ */
+function deletePage($pageId) {
+    $page = loadPage($pageId);
+    if (!$page) {
+        return ['success' => false, 'error' => 'Page not found'];
+    }
+    
+    $pagePath = dirname(__DIR__, 2) . '/pages/' . $page['category'] . '/' . $page['slug'];
+    
+    if (is_dir($pagePath)) {
+        // Remove all files in the directory
+        $files = array_diff(scandir($pagePath), ['.', '..']);
+        foreach ($files as $file) {
+            unlink($pagePath . '/' . $file);
+        }
+        
+        // Remove the directory
+        if (rmdir($pagePath)) {
+            return ['success' => true];
+        }
+    }
+    
+    return ['success' => false, 'error' => 'Failed to delete page'];
+}
 
 /**
  * Generate component preview HTML with theme support

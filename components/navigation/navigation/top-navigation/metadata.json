@@ -1,0 +1,36 @@
+{
+  "name": "Top Navigation",
+  "description": "A responsive top navigation bar with logo, menu items, and user profile dropdown",
+  "category": "navigation",
+  "subcategory": "navigation",
+  "tags": ["navigation", "header", "navbar", "responsive", "dropdown"],
+  "responsive": true,
+  "darkMode": true,
+  "dependencies": [],
+  "variants": {
+    "default": {
+      "name": "Default",
+      "description": "Standard top navigation with logo and menu items"
+    }
+  },
+  "customization": {
+    "colors": {
+      "primary": "indigo",
+      "background": "white",
+      "text": "gray"
+    },
+    "spacing": {
+      "height": "h-16",
+      "padding": "px-4 sm:px-6 lg:px-8"
+    }
+  },
+  "accessibility": {
+    "screenReader": true,
+    "keyboardNavigation": true,
+    "focusManagement": true
+  },
+  "preview": {
+    "width": "full",
+    "height": "16"
+  }
+}

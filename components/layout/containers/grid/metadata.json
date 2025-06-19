@@ -1,0 +1,75 @@
+{
+  "name": "Grid Container",
+  "description": "Responsive CSS Grid container for organizing components in columns",
+  "category": "layout",
+  "subcategory": "containers",
+  "type": "container",
+  "canContain": ["component", "container"],
+  "maxChildren": 12,
+  "tags": ["grid", "layout", "columns", "responsive"],
+  "responsive": true,
+  "darkMode": true,
+  "dependencies": ["tailwindcss"],
+  "version": "1.0.0",
+  "author": "TailwindUI Blocks",
+  "created": "2025-06-19",
+  "updated": "2025-06-19",
+  "defaultProps": {
+    "columns": 3,
+    "gap": 6,
+    "responsive": true,
+    "alignment": "stretch"
+  },
+  "configurableProps": [
+    {
+      "name": "columns",
+      "type": "number",
+      "label": "Columns",
+      "min": 1,
+      "max": 6,
+      "default": 3,
+      "description": "Number of columns in the grid"
+    },
+    {
+      "name": "gap",
+      "type": "select",
+      "label": "Gap",
+      "options": [
+        {"value": 2, "label": "Small (0.5rem)"},
+        {"value": 4, "label": "Medium (1rem)"},
+        {"value": 6, "label": "Large (1.5rem)"},
+        {"value": 8, "label": "Extra Large (2rem)"},
+        {"value": 12, "label": "2X Large (3rem)"}
+      ],
+      "default": 6
+    },
+    {
+      "name": "responsive",
+      "type": "boolean",
+      "label": "Responsive",
+      "default": true,
+      "description": "Stack on mobile devices"
+    },
+    {
+      "name": "alignment",
+      "type": "select",
+      "label": "Item Alignment",
+      "options": [
+        {"value": "stretch", "label": "Stretch"},
+        {"value": "start", "label": "Start"},
+        {"value": "center", "label": "Center"},
+        {"value": "end", "label": "End"}
+      ],
+      "default": "stretch"
+    }
+  ],
+  "features": [
+    "Responsive grid layout",
+    "Configurable columns (1-6)",
+    "Adjustable gap spacing",
+    "Mobile-first responsive",
+    "Multiple alignment options",
+    "Dark mode support",
+    "Drag & drop compatible"
+  ]
+}

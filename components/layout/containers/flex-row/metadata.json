@@ -1,0 +1,81 @@
+{
+  "name": "Flex Row",
+  "description": "Horizontal flexbox container for side-by-side component arrangement",
+  "category": "layout",
+  "subcategory": "containers",
+  "type": "container",
+  "canContain": ["component", "container"],
+  "maxChildren": 8,
+  "tags": ["flex", "row", "horizontal", "responsive"],
+  "responsive": true,
+  "darkMode": true,
+  "dependencies": ["tailwindcss"],
+  "version": "1.0.0",
+  "author": "TailwindUI Blocks",
+  "created": "2025-06-19",
+  "updated": "2025-06-19",
+  "defaultProps": {
+    "gap": 4,
+    "wrap": true,
+    "alignment": "stretch",
+    "justification": "start"
+  },
+  "configurableProps": [
+    {
+      "name": "gap",
+      "type": "select",
+      "label": "Gap",
+      "options": [
+        {"value": 1, "label": "Tiny (0.25rem)"},
+        {"value": 2, "label": "Small (0.5rem)"},
+        {"value": 4, "label": "Medium (1rem)"},
+        {"value": 6, "label": "Large (1.5rem)"},
+        {"value": 8, "label": "Extra Large (2rem)"}
+      ],
+      "default": 4
+    },
+    {
+      "name": "wrap",
+      "type": "boolean",
+      "label": "Wrap Items",
+      "default": true,
+      "description": "Allow items to wrap to new lines"
+    },
+    {
+      "name": "alignment",
+      "type": "select",
+      "label": "Vertical Alignment",
+      "options": [
+        {"value": "stretch", "label": "Stretch"},
+        {"value": "start", "label": "Top"},
+        {"value": "center", "label": "Center"},
+        {"value": "end", "label": "Bottom"},
+        {"value": "baseline", "label": "Baseline"}
+      ],
+      "default": "stretch"
+    },
+    {
+      "name": "justification",
+      "type": "select",
+      "label": "Horizontal Alignment",
+      "options": [
+        {"value": "start", "label": "Start"},
+        {"value": "center", "label": "Center"},
+        {"value": "end", "label": "End"},
+        {"value": "between", "label": "Space Between"},
+        {"value": "around", "label": "Space Around"},
+        {"value": "evenly", "label": "Space Evenly"}
+      ],
+      "default": "start"
+    }
+  ],
+  "features": [
+    "Horizontal flexbox layout",
+    "Responsive wrapping",
+    "Configurable gap spacing",
+    "Multiple alignment options",
+    "Flexible item sizing",
+    "Dark mode support",
+    "Drag & drop compatible"
+  ]
+}

@@ -1,0 +1,26 @@
+{
+    "name": "Untitled Page",
+    "structure": {
+        "type": "page",
+        "children": [
+            {
+                "type": "component",
+                "component": "top-navigation",
+                "category": "navigation",
+                "subcategory": "navigation",
+                "id": "item-1750351852715-5ly43p5md"
+            }
+        ]
+    },
+    "category": "landing-pages",
+    "tags": [
+        "page-builder"
+    ],
+    "description": "Page created with Page Builder: Untitled Page",
+    "author": "Page Builder User",
+    "version": "1.0.0",
+    "id": "page-1750351852-a3b7f4be",
+    "slug": "untitled-page",
+    "updated": "2025-06-19",
+    "created": "2025-06-19"
+}
