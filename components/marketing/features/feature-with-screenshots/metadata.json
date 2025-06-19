@@ -1,0 +1,55 @@
+{
+  "name": "Feature with Screenshots",
+  "description": "Feature section showcasing app functionality with large screenshots and detailed feature lists. Includes alternating layouts and multiple variations.",
+  "category": "marketing",
+  "subcategory": "features",
+  "tags": ["features", "screenshots", "app", "saas", "product", "showcase", "benefits"],
+  "responsive": true,
+  "darkMode": true,
+  "dependencies": ["tailwindcss"],
+  "version": "1.0.0",
+  "author": "TailwindUI Blocks",
+  "created": "2025-01-19",
+  "updated": "2025-01-19",
+  "features": [
+    "Large app screenshots",
+    "Detailed feature lists with icons",
+    "Alternating layouts (left/right)",
+    "Multiple section variations",
+    "Dark mode support",
+    "Responsive design",
+    "Professional typography"
+  ],
+  "usage": {
+    "ideal_for": [
+      "SaaS product pages",
+      "App landing pages",
+      "Software showcases",
+      "Feature demonstrations",
+      "Product walkthroughs",
+      "Technology presentations"
+    ],
+    "customization": [
+      "Replace screenshots with your app",
+      "Update feature lists and descriptions",
+      "Modify icons to match your features",
+      "Adjust colors to match brand",
+      "Reorder sections as needed",
+      "Add or remove feature items"
+    ]
+  },
+  "variations": [
+    {
+      "name": "Screenshot Right",
+      "description": "Content on left, screenshot on right"
+    },
+    {
+      "name": "Screenshot Left", 
+      "description": "Screenshot on left, content on right"
+    },
+    {
+      "name": "Dark Mode",
+      "description": "Dark theme variation"
+    }
+  ]
+}

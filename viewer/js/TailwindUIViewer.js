@@ -8,6 +8,7 @@ import { initBreakpoints, initWidthAdjuster, updateContainerWidths, updateBreakp
 import { initViewControls, switchView } from './modules/viewManager.js';
 import { initMonacoEditor, updateCodeEditor, loadCodeInEditor, toggleEditorTheme } from './modules/editor.js';
 import { initSplitView, applySplitOrientation, loadCodeInSplitEditor, updateLivePreview } from './modules/splitView.js';
+import { initExport } from './modules/export.js';
 
 
 export class TailwindUIViewer {
@@ -46,6 +47,7 @@ export class TailwindUIViewer {
         initViewControls(this);
         initMonacoEditor(this);
         initSplitView(this);
+        initExport(this);
 
         this.restoreSettings();
         this.initComponentActions();

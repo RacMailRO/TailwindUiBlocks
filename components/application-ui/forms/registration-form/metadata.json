@@ -1,0 +1,81 @@
+{
+  "name": "Registration Form",
+  "description": "Complete user registration form with first name, last name, email, password confirmation, terms agreement, and social login options.",
+  "category": "application-ui",
+  "subcategory": "forms",
+  "tags": ["form", "registration", "signup", "user", "account", "social-login", "terms"],
+  "responsive": true,
+  "darkMode": true,
+  "dependencies": ["tailwindcss"],
+  "version": "1.0.0",
+  "author": "TailwindUI Blocks",
+  "created": "2025-01-19",
+  "updated": "2025-01-19",
+  "features": [
+    "Complete registration fields",
+    "Password confirmation",
+    "Terms and conditions checkbox",
+    "Social login options (Twitter, GitHub)",
+    "Dark mode support",
+    "Responsive design",
+    "Form validation ready",
+    "Accessibility compliant"
+  ],
+  "usage": {
+    "ideal_for": [
+      "User registration pages",
+      "Account creation flows",
+      "SaaS signup forms",
+      "App onboarding",
+      "Membership sites",
+      "E-commerce accounts",
+      "Community platforms"
+    ],
+    "customization": [
+      "Update logo and branding",
+      "Modify form fields as needed",
+      "Add/remove social login options",
+      "Customize validation rules",
+      "Update terms and privacy links",
+      "Adjust colors to match brand",
+      "Add additional form fields"
+    ]
+  },
+  "form_fields": [
+    {
+      "name": "first-name",
+      "type": "text",
+      "required": true,
+      "autocomplete": "given-name"
+    },
+    {
+      "name": "last-name", 
+      "type": "text",
+      "required": true,
+      "autocomplete": "family-name"
+    },
+    {
+      "name": "email",
+      "type": "email", 
+      "required": true,
+      "autocomplete": "email"
+    },
+    {
+      "name": "password",
+      "type": "password",
+      "required": true,
+      "autocomplete": "new-password"
+    },
+    {
+      "name": "confirm-password",
+      "type": "password",
+      "required": true,
+      "autocomplete": "new-password"
+    },
+    {
+      "name": "agree-terms",
+      "type": "checkbox",
+      "required": true
+    }
+  ]
+}

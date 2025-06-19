@@ -1,0 +1,38 @@
+{
+  "name": "Split Hero",
+  "description": "Hero section with content on one side and decorative image grid on the other side. Perfect for showcasing products or services with visual appeal.",
+  "category": "marketing",
+  "subcategory": "heroes",
+  "tags": ["hero", "split", "images", "ecommerce", "product", "showcase"],
+  "responsive": true,
+  "darkMode": true,
+  "dependencies": ["tailwindcss"],
+  "version": "1.0.0",
+  "author": "TailwindUI Blocks",
+  "created": "2025-01-19",
+  "updated": "2025-01-19",
+  "features": [
+    "Split layout design",
+    "Decorative image grid",
+    "Responsive breakpoints",
+    "Dark mode support",
+    "Call-to-action button",
+    "Professional typography"
+  ],
+  "usage": {
+    "ideal_for": [
+      "E-commerce homepages",
+      "Product showcases",
+      "Fashion websites",
+      "Portfolio sites",
+      "Brand presentations"
+    ],
+    "customization": [
+      "Replace images with your products",
+      "Update headline and description",
+      "Modify button text and link",
+      "Adjust colors to match brand",
+      "Change grid layout if needed"
+    ]
+  }
+}

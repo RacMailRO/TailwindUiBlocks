@@ -1,0 +1,62 @@
+{
+  "name": "Split CTA",
+  "description": "Call-to-action section with split layouts, background images, and multiple variations. Includes app screenshots, statistics, and gradient backgrounds.",
+  "category": "marketing",
+  "subcategory": "cta",
+  "tags": ["cta", "call-to-action", "split", "background", "gradient", "screenshot", "stats"],
+  "responsive": true,
+  "darkMode": true,
+  "dependencies": ["tailwindcss"],
+  "version": "1.0.0",
+  "author": "TailwindUI Blocks",
+  "created": "2025-01-19",
+  "updated": "2025-01-19",
+  "features": [
+    "Multiple CTA layouts",
+    "Background image support",
+    "Gradient overlays",
+    "App screenshots integration",
+    "Statistics display",
+    "Dark mode support",
+    "Responsive design",
+    "Multiple button styles"
+  ],
+  "usage": {
+    "ideal_for": [
+      "Product launches",
+      "App downloads",
+      "Sign-up campaigns",
+      "Trial conversions",
+      "Company recruitment",
+      "Service promotions",
+      "Newsletter signups"
+    ],
+    "customization": [
+      "Replace background images",
+      "Update headline and description",
+      "Modify button text and links",
+      "Adjust gradient colors",
+      "Change statistics data",
+      "Update app screenshots",
+      "Customize link destinations"
+    ]
+  },
+  "variations": [
+    {
+      "name": "App Screenshot CTA",
+      "description": "CTA with app screenshot and gradient background"
+    },
+    {
+      "name": "Background Image CTA",
+      "description": "CTA with full background image and statistics"
+    },
+    {
+      "name": "Simple Split CTA",
+      "description": "Clean two-column layout with buttons"
+    },
+    {
+      "name": "Dark Mode",
+      "description": "Dark theme variations"
+    }
+  ]
+}

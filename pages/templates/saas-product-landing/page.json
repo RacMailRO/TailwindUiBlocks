@@ -1,0 +1,207 @@
+{
+  "id": "saas-product-landing-001",
+  "name": "SaaS Product Landing Page",
+  "description": "Complete landing page template for SaaS products with hero, features, pricing, and testimonials",
+  "category": "landing-pages",
+  "preview": "saas-product-landing-preview.jpg",
+  "created": "2025-01-19",
+  "updated": "2025-01-19",
+  "author": "TailwindUI Blocks",
+  "tags": ["saas", "product", "landing", "pricing", "features"],
+  "structure": {
+    "type": "page",
+    "children": [
+      {
+        "type": "container",
+        "component": "header",
+        "props": {
+          "sticky": true,
+          "shadow": true,
+          "background": "white"
+        },
+        "children": [
+          {
+            "type": "component",
+            "component": "top-navigation",
+            "category": "application-ui",
+            "subcategory": "navigation",
+            "props": {
+              "logo": "Your SaaS",
+              "navigation": [
+                {"name": "Features", "href": "#features"},
+                {"name": "Pricing", "href": "#pricing"},
+                {"name": "About", "href": "#about"},
+                {"name": "Contact", "href": "#contact"}
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "type": "container",
+        "component": "section",
+        "props": {
+          "padding": "xl",
+          "background": "gradient"
+        },
+        "children": [
+          {
+            "type": "component",
+            "component": "centered-hero",
+            "category": "marketing",
+            "subcategory": "heroes",
+            "props": {
+              "headline": "Streamline Your Workflow",
+              "subheadline": "Powerful tools to help your team collaborate better and get more done.",
+              "cta_primary": "Start Free Trial",
+              "cta_secondary": "Watch Demo"
+            }
+          }
+        ]
+      },
+      {
+        "type": "container",
+        "component": "section",
+        "props": {
+          "padding": "lg",
+          "background": "white"
+        },
+        "children": [
+          {
+            "type": "component",
+            "component": "feature-with-screenshots",
+            "category": "marketing",
+            "subcategory": "features",
+            "props": {
+              "title": "Everything you need to succeed",
+              "description": "Our platform provides all the tools your team needs to collaborate effectively and deliver results."
+            }
+          }
+        ]
+      },
+      {
+        "type": "container",
+        "component": "section",
+        "props": {
+          "padding": "lg",
+          "background": "gray-50"
+        },
+        "children": [
+          {
+            "type": "component",
+            "component": "three-column-features",
+            "category": "marketing",
+            "subcategory": "features",
+            "props": {
+              "title": "Why choose our platform?",
+              "features": [
+                {
+                  "title": "Lightning Fast",
+                  "description": "Built for speed and performance"
+                },
+                {
+                  "title": "Secure & Reliable", 
+                  "description": "Enterprise-grade security and 99.9% uptime"
+                },
+                {
+                  "title": "Easy Integration",
+                  "description": "Connects with all your favorite tools"
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "type": "container",
+        "component": "section",
+        "props": {
+          "padding": "xl",
+          "background": "white"
+        },
+        "children": [
+          {
+            "type": "component",
+            "component": "simple-pricing",
+            "category": "marketing",
+            "subcategory": "pricing",
+            "props": {
+              "title": "Simple, transparent pricing",
+              "description": "Choose the plan that's right for your team"
+            }
+          }
+        ]
+      },
+      {
+        "type": "container",
+        "component": "section",
+        "props": {
+          "padding": "lg",
+          "background": "gray-50"
+        },
+        "children": [
+          {
+            "type": "component",
+            "component": "carousel-testimonials",
+            "category": "marketing",
+            "subcategory": "testimonials",
+            "props": {
+              "title": "Loved by thousands of teams",
+              "description": "See what our customers have to say"
+            }
+          }
+        ]
+      },
+      {
+        "type": "container",
+        "component": "section",
+        "props": {
+          "padding": "xl",
+          "background": "indigo-600"
+        },
+        "children": [
+          {
+            "type": "component",
+            "component": "simple-cta",
+            "category": "marketing",
+            "subcategory": "cta",
+            "props": {
+              "title": "Ready to get started?",
+              "description": "Join thousands of teams already using our platform",
+              "cta_text": "Start Your Free Trial",
+              "theme": "dark"
+            }
+          }
+        ]
+      },
+      {
+        "type": "container",
+        "component": "footer",
+        "props": {
+          "background": "gray-900",
+          "border": true
+        },
+        "children": [
+          {
+            "type": "component",
+            "component": "footer-content",
+            "category": "layout",
+            "subcategory": "semantic",
+            "props": {
+              "company": "Your SaaS",
+              "description": "Making teams more productive since 2024"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "metadata": {
+    "components_used": 8,
+    "containers_used": 7,
+    "estimated_build_time": "15 minutes",
+    "difficulty": "intermediate",
+    "responsive": true,
+    "dark_mode": true
+  }
+}
